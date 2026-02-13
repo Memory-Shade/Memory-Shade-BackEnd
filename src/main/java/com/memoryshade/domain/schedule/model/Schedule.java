@@ -1,12 +1,11 @@
 package com.memoryshade.domain.schedule.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
 
 @Entity
 @Getter
@@ -15,4 +14,15 @@ public class Schedule {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer scheduleId;
+
+    @Column(name = "user_id")
+    private Integer userId;
+
+    private String title;
+
+    @Column(name = "alarm_time")
+    private LocalDateTime alarmTime;
+
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
 }
