@@ -2,6 +2,7 @@ package com.memoryshade.domain.diary.model;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -22,7 +23,7 @@ public class Diary {
     private String contentStt; //TODO: 자료명 수정
 
     @Column(name = "content_summary")
-    private String contentSummary;
+    private String contentSummary; //TODO: 자료명 수정
 
     @Column(name = "diary_date")
     private LocalDateTime diaryDate;
@@ -32,4 +33,13 @@ public class Diary {
 
     @Column(name = "is_shared")
     private boolean isShared;
+
+    @Builder
+    public Diary(String contentStt, String contentSummary, LocalDateTime diaryDate, LocalDateTime createdAt, boolean isShared) {
+        this.contentStt = contentStt;
+        this.contentSummary = contentSummary;
+        this.diaryDate = diaryDate;
+        this.createdAt = createdAt;
+        this.isShared = isShared;
+    }
 }

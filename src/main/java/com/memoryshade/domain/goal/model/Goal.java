@@ -2,6 +2,7 @@ package com.memoryshade.domain.goal.model;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -28,4 +29,12 @@ public class Goal {
 
     @Column(name = "is_achieved")
     private boolean isAchieved;
+
+    @Builder
+    public Goal(String title, String category, LocalDateTime createdAt, boolean isAchieved) {
+        this.title = title;
+        this.category = category;
+        this.createdAt = createdAt;
+        this.isAchieved = isAchieved;
+    }
 }

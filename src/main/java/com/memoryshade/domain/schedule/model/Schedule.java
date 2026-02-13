@@ -2,6 +2,7 @@ package com.memoryshade.domain.schedule.model;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -25,4 +26,11 @@ public class Schedule {
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
+
+    @Builder
+    public Schedule(String title, LocalDateTime alarmTime, LocalDateTime createdAt) {
+        this.title = title;
+        this.alarmTime = alarmTime;
+        this.createdAt = createdAt;
+    }
 }
