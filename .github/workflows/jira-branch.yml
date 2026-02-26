@@ -20,7 +20,6 @@ jobs:
           TITLE="${{ github.event.issue.title }}"
           NUM="${{ github.event.issue.number }}"
 
-          # 1) prefix 결정 (feat/refactor/fix) - 기본 feat
           PREFIX="feat"
           if echo "$TITLE" | grep -qiE '^[[:space:]]*feat[[:space:]]*:'; then
             PREFIX="feat"
@@ -60,18 +59,42 @@ jobs:
           git checkout -b "$BRANCH" "origin/main"
           git push origin "$BRANCH"
 
-      - name: Delete branch when issue closed
+      - name: Delete branch(es) when issue closed
         if: github.event.action == 'closed'
         shell: bash
         run: |
           set -euo pipefail
-          BRANCH="${{ steps.vars.outputs.branch }}"
-          echo "Deleting $BRANCH"
+          NUM="${{ github.event.issue.number }}"
 
-          REF="refs/heads/${BRANCH}"
-          REF_ENC="${REF//\//%2F}"
+          echo "Finding branches for issue #$NUM"
 
-          curl -sS -X DELETE \
-            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-            -H "Accept: application/vnd.github+json" \
-            "https://api.github.com/repos/${{ github.repository }}/git/${REF_ENC}"
+          page=1
+          while :; do
+            resp=$(curl -sS \
+              -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+              -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/${{ github.repository }}/branches?per_page=100&page=$page")
+
+            count=$(echo "$resp" | grep -c '"name":' || true)
+            if [ "$count" -eq 0 ]; then
+              break
+            fi
+
+            branches=$(echo "$resp" | grep -oE '"name":[[:space:]]*"[^"]+"' | sed -E 's/"name":[[:space:]]*"([^"]+)"/\1/')
+
+            for br in $branches; do
+              if [[ "$br" == */issue-${NUM}-* ]]; then
+                echo "Deleting $br"
+
+                br_enc="${br//\//%2F}"
+
+                curl -sS -X DELETE \
+                  -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+                  -H "Accept: application/vnd.github+json" \
+                  "https://api.github.com/repos/${{ github.repository }}/git/refs/heads/${br_enc}" \
+                  | cat
+              fi
+            done
+
+            page=$((page+1))
+          done
