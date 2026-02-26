@@ -1,1 +1,77 @@
+name: Jira Branch Automation
 
+on:
+  issues:
+    types: [opened, closed]
+
+permissions:
+  contents: write
+
+jobs:
+  issue-branch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Decide branch name from issue title
+        id: vars
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          TITLE="${{ github.event.issue.title }}"
+          NUM="${{ github.event.issue.number }}"
+
+          # 1) prefix 결정 (feat/refactor/fix) - 기본 feat
+          PREFIX="feat"
+          if echo "$TITLE" | grep -qiE '^[[:space:]]*feat[[:space:]]*:'; then
+            PREFIX="feat"
+          elif echo "$TITLE" | grep -qiE '^[[:space:]]*refactor[[:space:]]*:'; then
+            PREFIX="refactor"
+          elif echo "$TITLE" | grep -qiE '^[[:space:]]*fix[[:space:]]*:'; then
+            PREFIX="fix"
+          fi
+
+          CLEAN=$(echo "$TITLE" | sed -E 's/^[[:space:]]*(feat|refactor|fix)[[:space:]]*:[[:space:]]*//I')
+          SLUG=$(echo "$CLEAN" \
+            | tr '[:upper:]' '[:lower:]' \
+            | sed -E 's/[^a-z0-9]+/-/g' \
+            | sed -E 's/^-+|-+$//g' \
+            | cut -c1-40)
+
+          # slug가 비면 fallback
+          if [ -z "$SLUG" ]; then
+            SLUG="work"
+          fi
+
+          BRANCH="${PREFIX}/issue-${NUM}-${SLUG}"
+          echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
+
+      - name: Create branch when issue opened
+        if: github.event.action == 'opened'
+        shell: bash
+        run: |
+          set -euo pipefail
+          BRANCH="${{ steps.vars.outputs.branch }}"
+
+          git init
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git remote add origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}"
+          git fetch origin
+          git checkout -b "$BRANCH" "origin/main"
+          git push origin "$BRANCH"
+
+      - name: Delete branch when issue closed
+        if: github.event.action == 'closed'
+        shell: bash
+        run: |
+          set -euo pipefail
+          BRANCH="${{ steps.vars.outputs.branch }}"
+          echo "Deleting $BRANCH"
+
+          REF="refs/heads/${BRANCH}"
+          REF_ENC="${REF//\//%2F}"
+
+          curl -sS -X DELETE \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${{ github.repository }}/git/${REF_ENC}"
