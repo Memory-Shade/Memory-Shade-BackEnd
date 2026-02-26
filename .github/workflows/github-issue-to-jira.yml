@@ -1,1 +1,61 @@
+name: GitHub Issue -> Jira Backlog
 
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: read
+
+jobs:
+  create-jira-issue:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create Jira issue
+        env:
+          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}       
+          JIRA_EMAIL: ${{ secrets.JIRA_EMAIL }}             
+          JIRA_API_TOKEN: ${{ secrets.API_TOKEN }}   
+
+          JIRA_PROJECT_KEY: ${{ vars.JIRA_PROJECT_KEY }}    
+          JIRA_ISSUE_TYPE: ${{ vars.JIRA_ISSUE_TYPE }}      
+
+          GH_TITLE: ${{ github.event.issue.title }}
+          GH_BODY: ${{ github.event.issue.body }}
+          GH_URL: ${{ github.event.issue.html_url }}
+        run: |
+          set -euo pipefail
+
+          sudo apt-get update -y
+          sudo apt-get install -y jq
+
+          auth=$(printf "%s:%s" "$JIRA_EMAIL" "$JIRA_API_TOKEN" | base64 -w 0)
+
+          # Jira description (ADF format)
+          desc=$(jq -n --arg body "${GH_BODY:-}" --arg url "$GH_URL" \
+            '{type:"doc",version:1,content:[
+              {type:"paragraph",content:[{type:"text",text:"GitHub: "},{type:"text",text:$url}]},
+              {type:"paragraph",content:[{type:"text",text:"---"}]},
+              {type:"paragraph",content:[{type:"text",text:$body}]}
+            ]}')
+
+          payload=$(jq -n \
+            --arg key "$JIRA_PROJECT_KEY" \
+            --arg summary "$GH_TITLE" \
+            --arg issuetype "$JIRA_ISSUE_TYPE" \
+            --argjson description "$desc" \
+            '{
+              fields: {
+                project: { key: $key },
+                summary: $summary,
+                issuetype: { name: $issuetype },
+                description: $description
+              }
+            }')
+
+          curl -sS -X POST \
+            -H "Authorization: Basic $auth" \
+            -H "Accept: application/json" \
+            -H "Content-Type: application/json" \
+            "${JIRA_BASE_URL}/rest/api/3/issue" \
+            -d "$payload" | jq .
