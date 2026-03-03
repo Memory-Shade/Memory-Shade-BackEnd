@@ -1,5 +1,6 @@
 package com.memoryshade.domain.goal.model;
 
+import com.memoryshade.domain.user.model.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -17,24 +18,30 @@ public class Goal {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer goalId;
 
-    @Column(name = "user_id")
-    private Integer userId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
 
     private String title;
 
     private String category;
 
-    @Column(name = "created_at")
-    private LocalDateTime createdAt;
+    @Column(name = "achieve_percent")
+    private Integer achievePercent;
 
     @Column(name = "is_achieved")
     private boolean isAchieved;
 
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+
     @Builder
-    public Goal(String title, String category, LocalDateTime createdAt, boolean isAchieved) {
+    public Goal(User user, String title, String category, LocalDateTime createdAt) {
+        this.user = user;
         this.title = title;
         this.category = category;
+        this.achievePercent = 0;
+        this.isAchieved = false;
         this.createdAt = createdAt;
-        this.isAchieved = isAchieved;
     }
 }
