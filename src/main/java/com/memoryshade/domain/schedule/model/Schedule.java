@@ -1,5 +1,6 @@
 package com.memoryshade.domain.schedule.model;
 
+import com.memoryshade.domain.user.model.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -16,8 +17,9 @@ public class Schedule {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer scheduleId;
 
-    @Column(name = "user_id")
-    private Integer userId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
     private String title;
 
@@ -28,7 +30,8 @@ public class Schedule {
     private LocalDateTime createdAt;
 
     @Builder
-    public Schedule(String title, LocalDateTime alarmTime, LocalDateTime createdAt) {
+    public Schedule(User user, String title, LocalDateTime alarmTime, LocalDateTime createdAt) {
+        this.user = user;
         this.title = title;
         this.alarmTime = alarmTime;
         this.createdAt = createdAt;
