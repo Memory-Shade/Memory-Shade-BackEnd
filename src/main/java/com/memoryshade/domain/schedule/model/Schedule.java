@@ -10,30 +10,38 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 @Entity
+@Table(name = "schedule")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Schedule {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer scheduleId;
+    private Long scheduleId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    @Column(nullable = false)
     private String title;
 
-    @Column(name = "alarm_time")
+    @Column(name = "alarm_time", nullable = false)
     private LocalDateTime alarmTime;
 
-    @Column(name = "created_at")
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @Builder
-    public Schedule(User user, String title, LocalDateTime alarmTime, LocalDateTime createdAt) {
+    public Schedule(User user, String title, LocalDateTime alarmTime) {
         this.user = user;
         this.title = title;
         this.alarmTime = alarmTime;
-        this.createdAt = createdAt;
+        this.createdAt = LocalDateTime.now();
+    }
+
+    public void updateSchedule(String title, LocalDateTime alarmTime) {
+        this.title = title;
+        this.alarmTime = alarmTime;
     }
 }

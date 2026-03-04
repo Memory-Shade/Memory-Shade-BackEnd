@@ -1,45 +1,59 @@
 package com.memoryshade.domain.diary.model;
 
+import com.memoryshade.domain.user.model.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
+@Table(name = "diary")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Diary {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer diaryId;
+    private Long diaryId;
 
-    @Column(name = "user_id")
-    private Integer userId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
-    @Column(name = "content_stt")
-    private String contentStt; //TODO: 자료명 수정
+    @Column(name = "content_stt", columnDefinition = "TEXT")
+    private String contentStt;
 
-    @Column(name = "content_summary")
-    private String contentSummary; //TODO: 자료명 수정
+    @Column(name = "content_summary", columnDefinition = "TEXT")
+    private String contentSummary;
 
-    @Column(name = "diary_date")
-    private LocalDateTime diaryDate;
+    @Column(name = "diary_date", nullable = false)
+    private LocalDate diaryDate;
 
-    @Column(name = "created_at")
-    private LocalDateTime createdAt;
-
-    @Column(name = "is_shared")
+    @Column(name = "is_shared", nullable = false)
     private boolean isShared;
 
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
     @Builder
-    public Diary(String contentStt, String contentSummary, LocalDateTime diaryDate, LocalDateTime createdAt, boolean isShared) {
+    public Diary(User user, String contentStt, String contentSummary, LocalDate diaryDate) {
+        this.user = user;
         this.contentStt = contentStt;
         this.contentSummary = contentSummary;
         this.diaryDate = diaryDate;
-        this.createdAt = createdAt;
-        this.isShared = isShared;
+        this.isShared = false;
+        this.createdAt = LocalDateTime.now();
+    }
+
+    public void share() {
+        this.isShared = true;
+    }
+
+    public void unshare() {
+        this.isShared = false;
     }
 }
