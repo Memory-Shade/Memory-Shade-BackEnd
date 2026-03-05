@@ -39,5 +39,4 @@ public class Goal {
         this.category = category;
         this.createdAt = LocalDateTime.now();
     }
-    // 수정/삭제 메서드 없음 → 변경 불가
 }
