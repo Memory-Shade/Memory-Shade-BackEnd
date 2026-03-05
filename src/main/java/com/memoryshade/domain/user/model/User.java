@@ -24,6 +24,10 @@ public class User {
 
     private String name;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Role role;
+
     private String fcmToken;
 
     private LocalDateTime createdAt;
@@ -31,12 +35,17 @@ public class User {
     private LocalDateTime lastLoggedAt;
 
     @Builder
-    private User(String phoneNumber, String password, String name, String fcmToken, LocalDateTime createdAt, LocalDateTime lastLoggedAt) {
+    private User(String phoneNumber, String password, String name, Role role, String fcmToken, LocalDateTime createdAt, LocalDateTime lastLoggedAt) {
         this.phoneNumber = phoneNumber;
         this.password = password;
         this.name = name;
+        this.role = role;
         this.fcmToken = fcmToken;
         this.createdAt = createdAt;
         this.lastLoggedAt = lastLoggedAt;
+    }
+
+    public void updateLastLoggedAt() {
+        this.lastLoggedAt = LocalDateTime.now();
     }
 }
