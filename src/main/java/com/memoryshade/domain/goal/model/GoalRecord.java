@@ -23,7 +23,7 @@ public class GoalRecord {
     @JoinColumn(name = "goal_id", nullable = false)
     private Goal goal;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "diary_id", nullable = false)
     private Diary diary;
 
