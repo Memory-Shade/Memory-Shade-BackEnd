@@ -1,9 +1,13 @@
 package com.memoryshade.domain.user.dto;
 
 import com.memoryshade.domain.user.model.Role;
+import com.memoryshade.domain.user.model.User;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+import org.springframework.security.crypto.password.PasswordEncoder;
+
+import java.time.LocalDateTime;
 
 public record SignUpRequestDto(
 
@@ -19,4 +23,14 @@ public record SignUpRequestDto(
         String name,
 
         Role role
-) {}
+) {
+        public User toUser(PasswordEncoder encoder) {
+                return User.builder()
+                        .phoneNumber(phoneNumber)
+                        .password(encoder.encode(password))
+                        .name(name)
+                        .role(role)
+                        .createdAt(LocalDateTime.now())
+                        .build();
+        }
+}
