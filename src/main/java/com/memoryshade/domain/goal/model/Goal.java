@@ -19,7 +19,7 @@ public class Goal {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long goalId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
