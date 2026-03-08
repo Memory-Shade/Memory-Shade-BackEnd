@@ -27,18 +27,11 @@ public class AuthService {
     public AuthResponseDto signUp(SignUpRequestDto request) {
         userRepository.validateDuplicatePhoneNumber(request.phoneNumber());
 
-        String encodedPassword = passwordEncoder.encode(request.password());
-        User user = User.builder()
-                .phoneNumber(request.phoneNumber())
-                .password(encodedPassword)
-                .name(request.name())
-                .role(request.role())
-                .createdAt(LocalDateTime.now())
-                .build();
+        User user = request.toUser(passwordEncoder);
         userRepository.save(user);
 
         String token = jwtProvider.generateAccessToken(user.getUserId(), user.getPhoneNumber());
-        return new AuthResponseDto(user.getUserId(), user.getName(), token);
+        return AuthResponseDto.of(user, token);
     }
 
     @Transactional
@@ -52,6 +45,6 @@ public class AuthService {
         user.updateLastLoggedAt();
 
         String token = jwtProvider.generateAccessToken(user.getUserId(), user.getPhoneNumber());
-        return new AuthResponseDto(user.getUserId(), user.getName(), token);
+        return AuthResponseDto.of(user, token);
     }
 }
