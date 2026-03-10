@@ -10,10 +10,10 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "game_session")
+@Table(name = "game_sessions")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class GameSession {
+public class Game {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -30,9 +30,13 @@ public class GameSession {
     private LocalDateTime playedAt;
 
     @Builder
-    public GameSession(User user, Integer score) {
+    public Game(User user, Integer score) {
         this.user = user;
         this.score = score;
         this.playedAt = LocalDateTime.now();
+    }
+
+    public void updateScore(Integer score) {
+        this.score = score;
     }
 }

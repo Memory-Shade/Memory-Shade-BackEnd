@@ -11,7 +11,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "chat_session")
+@Table(name = "chat_sessions")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ChatSession {

@@ -8,10 +8,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "gps_safe_zone")
+@Table(name = "gps_safe_zones")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class GpsSafeZone {
+public class Gps {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -25,6 +25,8 @@ public class GpsSafeZone {
     @JoinColumn(name = "guardian_id", nullable = false)
     private User guardian;
 
+    private String title;
+
     @Column(nullable = false)
     private Double latitude;
 
@@ -35,9 +37,10 @@ public class GpsSafeZone {
     private Integer radiusMeter;
 
     @Builder
-    public GpsSafeZone(User user, User guardian, Double latitude, Double longitude, Integer radiusMeter) {
+    public Gps(User user, User guardian, Double latitude, String title, Double longitude, Integer radiusMeter) {
         this.user = user;
         this.guardian = guardian;
+        this.title = title;
         this.latitude = latitude;
         this.longitude = longitude;
         this.radiusMeter = radiusMeter;

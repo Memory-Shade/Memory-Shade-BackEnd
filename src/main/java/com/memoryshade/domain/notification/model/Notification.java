@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "notification")
+@Table(name = "notifications")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Notification {
@@ -45,7 +45,7 @@ public class Notification {
         this.createdAt = LocalDateTime.now();
     }
 
-    public void markAsRead() {
+    public void updateAsRead() {
         this.isRead = true;
     }
 }
