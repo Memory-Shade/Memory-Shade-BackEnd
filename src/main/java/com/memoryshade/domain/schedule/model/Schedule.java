@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "schedule")
+@Table(name = "schedules")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Schedule {
@@ -32,16 +32,20 @@ public class Schedule {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    private LocalDateTime updatedAt;
+
     @Builder
     public Schedule(User user, String title, LocalDateTime alarmTime) {
         this.user = user;
         this.title = title;
         this.alarmTime = alarmTime;
         this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
     }
 
     public void updateSchedule(String title, LocalDateTime alarmTime) {
         this.title = title;
         this.alarmTime = alarmTime;
+        this.updatedAt = LocalDateTime.now();
     }
 }
