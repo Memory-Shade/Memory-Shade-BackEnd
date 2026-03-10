@@ -10,11 +10,17 @@ import java.util.Optional;
 public interface UserRepository extends Repository<User, Long> {
 
     Optional<User> findByPhoneNumber(String phoneNumber);
+    Optional<User> findByUserId(Long userId);
 
     User save(User user);
 
     default User getByPhoneNumber(String phoneNumber) {
         return findByPhoneNumber(phoneNumber)
+                .orElseThrow(() -> new ExceptionList(AuthErrorCode.USER_NOT_FOUND));
+    }
+
+    default User getByUserId(Long userId) {
+        return findByUserId(userId)
                 .orElseThrow(() -> new ExceptionList(AuthErrorCode.USER_NOT_FOUND));
     }
 
