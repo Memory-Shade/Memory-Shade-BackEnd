@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "guardian_link")
+@Table(name = "guardian_links")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class GuardianLink {
