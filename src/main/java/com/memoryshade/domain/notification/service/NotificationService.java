@@ -40,7 +40,7 @@ public class NotificationService {
             Long loginUserId,
             Long notiId,
             NotificationUpdateReadRequestDto request) {
-        Notification notification = notificationRepository.getByNotiIdAndUserId(loginUserId, notiId);
+        Notification notification = notificationRepository.getByNotiIdAndUserId(notiId, loginUserId);
         notification.updateAsRead();
         return NotificationResponseDto.fromNotification(notification);
     }
