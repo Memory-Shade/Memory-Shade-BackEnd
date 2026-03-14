@@ -11,6 +11,12 @@ public interface GuardianLinkRepository extends Repository<GuardianLink, Long> {
 
     boolean existsByUser_UserIdAndGuardian_UserId(Long userId, Long guardianId);
 
+    default void validateLinked(Long userId, Long guardianId) {
+        if (!existsByUser_UserIdAndGuardian_UserId(userId, guardianId)) {
+            throw new ExceptionList(GuardianLinkErrorCode.GUARDIAN_LINK_NOT_FOUND);
+        }
+    }
+
     default void validateNotLinked(Long userId, Long guardianId) {
         if (existsByUser_UserIdAndGuardian_UserId(userId, guardianId)) {
             throw new ExceptionList(GuardianLinkErrorCode.ALREADY_LINKED);
