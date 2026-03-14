@@ -1,12 +1,9 @@
 package com.memoryshade.domain.gps.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.PropertyNamingStrategies;
-import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import com.memoryshade.domain.gps.model.Gps;
 
-@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
-public record GpsCreateResponseDto(
+public record GpsResponseDto(
 
         @JsonProperty("zone_id")
         Long zoneId,
@@ -23,8 +20,8 @@ public record GpsCreateResponseDto(
         @JsonProperty("radius_meter")
         Integer radiusMeter
 ) {
-    public static GpsCreateResponseDto fromGps(Gps zone) {
-        return new GpsCreateResponseDto(
+    public static GpsResponseDto fromGps(Gps zone) {
+        return new GpsResponseDto(
                 zone.getZoneId(),
                 zone.getUser().getUserId(),
                 zone.getGuardian().getUserId(),

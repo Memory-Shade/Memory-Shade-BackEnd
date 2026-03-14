@@ -46,7 +46,8 @@ public class Gps {
         this.radiusMeter = radiusMeter;
     }
 
-    public void updateSafeZone(Double latitude, Double longitude, Integer radiusMeter) {
+    public void updateSafeZone(String title, Double latitude, Double longitude, Integer radiusMeter) {
+        this.title = title;
         this.latitude = latitude;
         this.longitude = longitude;
         this.radiusMeter = radiusMeter;

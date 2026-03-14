@@ -10,7 +10,7 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
-public record GpsCreateRequestDto(
+public record GpsRequestDto(
 
         String title,
 
