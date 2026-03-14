@@ -11,6 +11,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/schedules")
 @RequiredArgsConstructor
@@ -24,6 +27,14 @@ public class ScheduleController {
             @AuthenticationPrincipal Long loginUserId,
             @Valid @RequestBody ScheduleRequestDto request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(scheduleService.create(loginUserId, request));
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<List<ScheduleResponseDto>> getSchedules(
+            @AuthenticationPrincipal Long loginUserId,
+            @RequestParam("date") LocalDate date
+    ) {
+        return ResponseEntity.ok(scheduleService.getAllSchedulesByDate(loginUserId, date));
     }
 
     @PutMapping("/{scheduleId}")

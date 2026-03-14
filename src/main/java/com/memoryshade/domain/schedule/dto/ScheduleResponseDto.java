@@ -20,7 +20,7 @@ public record ScheduleResponseDto(
         @JsonProperty("alarm_time")
         LocalDateTime alarmTime,
 
-        @JsonProperty("update_at")
+        @JsonProperty("updated_at")
         LocalDateTime updatedAt
 ) {
     public static ScheduleResponseDto fromSchedule(Schedule schedule) {

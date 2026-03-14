@@ -10,6 +10,10 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -23,6 +27,18 @@ public class ScheduleService {
         Schedule schedule = request.toSchedule(user);
         scheduleRepository.save(schedule);
         return ScheduleResponseDto.fromSchedule(schedule);
+    }
+
+    public List<ScheduleResponseDto> getAllSchedulesByDate(Long loginUserId, LocalDate date) {
+        userRepository.getByUserId(loginUserId);
+
+        LocalDateTime start = date.atStartOfDay();
+        LocalDateTime end = date.plusDays(1).atStartOfDay();
+
+        return scheduleRepository.findAllSchedulesByUserIdAndDate(loginUserId, start, end)
+                .stream()
+                .map(ScheduleResponseDto::fromSchedule)
+                .toList();
     }
 
     public ScheduleResponseDto update(Long loginUserId, Long scheduleId, ScheduleRequestDto request) {
