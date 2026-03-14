@@ -56,4 +56,9 @@ public class Diary {
     public void unshare() {
         this.isShared = false;
     }
+
+    public void updateContent(String contentStt, String contentSummary) {
+        this.contentStt = contentStt;
+        this.contentSummary = contentSummary;
+    }
 }
