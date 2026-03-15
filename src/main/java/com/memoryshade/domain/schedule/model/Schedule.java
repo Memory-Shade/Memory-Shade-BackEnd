@@ -29,6 +29,9 @@ public class Schedule {
     @Column(name = "alarm_time", nullable = false)
     private LocalDateTime alarmTime;
 
+    @Column(name = "notified_at")
+    private LocalDateTime notifiedAt;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -39,6 +42,7 @@ public class Schedule {
         this.user = user;
         this.title = title;
         this.alarmTime = alarmTime;
+        this.notifiedAt = null;
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
     }
@@ -47,5 +51,9 @@ public class Schedule {
         this.title = title;
         this.alarmTime = alarmTime;
         this.updatedAt = LocalDateTime.now();
+    }
+
+    public void markNotified() {
+        this.notifiedAt = LocalDateTime.now();
     }
 }
