@@ -25,7 +25,7 @@ public class GpsService {
     private final UserRepository userRepository;
     private final GuardianLinkRepository guardianLinkRepository;
 
-    public GpsResponseDto Create(Long loginUserId, Long userId, GpsRequestDto request) {
+    public GpsResponseDto create(Long loginUserId, Long userId, GpsRequestDto request) {
 
         if (loginUserId == null) {
             throw new ExceptionList(GpsErrorCode.UNAUTHORIZED_GUARDIAN);
@@ -45,6 +45,8 @@ public class GpsService {
         if (guardian.getUserId().equals(user.getUserId())) {
             throw new ExceptionList(GpsErrorCode.SELF_SET_NOT_ALLOWED);
         }
+
+        guardianLinkRepository.validateLinked(userId, loginUserId);
 
         Gps gps = gpsRepository.save(request.toGps(user, guardian));
 
