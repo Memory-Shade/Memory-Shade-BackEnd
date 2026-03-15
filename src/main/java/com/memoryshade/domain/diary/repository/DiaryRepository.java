@@ -3,15 +3,13 @@ package com.memoryshade.domain.diary.repository;
 import com.memoryshade.domain.diary.exception.DiaryErrorCode;
 import com.memoryshade.domain.diary.model.Diary;
 import com.memoryshade.global.exception.ExceptionList;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
+import org.springframework.data.repository.Repository;
 
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
-@Repository
-public interface DiaryRepository extends JpaRepository<Diary, Long> {
+public interface DiaryRepository extends Repository<Diary, Long> {
 
     Optional<Diary> findByDiaryIdAndUserUserId(Long diaryId, Long userId);
 
