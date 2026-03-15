@@ -1,5 +1,8 @@
 package com.memoryshade.domain.schedule.service;
 
+import com.memoryshade.domain.notification.dto.NotificationCreateRequestDto;
+import com.memoryshade.domain.notification.model.NotiType;
+import com.memoryshade.domain.notification.service.NotificationService;
 import com.memoryshade.domain.schedule.dto.ScheduleRequestDto;
 import com.memoryshade.domain.schedule.dto.ScheduleResponseDto;
 import com.memoryshade.domain.schedule.model.Schedule;
@@ -20,12 +23,22 @@ import java.util.List;
 public class ScheduleService {
     private final ScheduleRepository scheduleRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
     public ScheduleResponseDto create(Long loginUserId, ScheduleRequestDto request) {
         User user = userRepository.getByUserId(loginUserId);
 
         Schedule schedule = request.toSchedule(user);
         scheduleRepository.save(schedule);
+
+        notificationService.create(
+                loginUserId,
+                new NotificationCreateRequestDto(
+                        schedule.getTitle(), //TODO: "일정이 생성되었습니다. title + alarmtime
+                        NotiType.SCHEDULE
+                )
+        );
+
         return ScheduleResponseDto.fromSchedule(schedule);
     }
 
