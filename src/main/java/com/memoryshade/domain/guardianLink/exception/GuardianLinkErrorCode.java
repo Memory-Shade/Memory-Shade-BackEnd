@@ -15,7 +15,8 @@ public enum GuardianLinkErrorCode implements ErrorCode {
     PHONE_NUMBER_MISMATCH(HttpStatus.BAD_REQUEST, "요청 전화번호와 대상 사용자가 일치하지 않습니다"),
     SELF_LINK_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "본인 계정은 연결할 수 없습니다"),
     ALREADY_LINKED(HttpStatus.CONFLICT, "이미 연결된 사용자입니다"),
-    GUARDIAN_LINK_NOT_FOUND(HttpStatus.FORBIDDEN, "해당 사용자와 연결된 보호자가 아닙니다");
+    GUARDIAN_LINK_NOT_FOUND(HttpStatus.FORBIDDEN, "해당 사용자와 연결된 보호자가 아닙니다"),
+    USER_NOT_FOUND_BY_PHONE_NUMBER(HttpStatus.NOT_FOUND, "해당 전화번호의 사용자를 찾을 수 없습니다.");
 
     private final HttpStatus httpStatus;
     private final String message;

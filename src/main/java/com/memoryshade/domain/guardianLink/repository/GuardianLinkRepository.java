@@ -5,6 +5,8 @@ import com.memoryshade.domain.guardianLink.model.GuardianLink;
 import com.memoryshade.global.exception.ExceptionList;
 import org.springframework.data.repository.Repository;
 
+import java.util.List;
+
 public interface GuardianLinkRepository extends Repository<GuardianLink, Long> {
 
     GuardianLink save(GuardianLink guardianLink);
@@ -22,4 +24,6 @@ public interface GuardianLinkRepository extends Repository<GuardianLink, Long> {
             throw new ExceptionList(GuardianLinkErrorCode.ALREADY_LINKED);
         }
     }
+
+    List<GuardianLink> findAllByGuardian_UserId(Long guardianId);
 }
