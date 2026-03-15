@@ -1,5 +1,6 @@
 package com.memoryshade.domain.diary.service;
 
+<<<<<<< HEAD
 import com.memoryshade.domain.diary.dto.DiaryReadResponseDto;
 import com.memoryshade.domain.diary.dto.DiaryUpdateShareResponseDto;
 import com.memoryshade.domain.diary.model.Diary;
@@ -11,16 +12,29 @@ import com.memoryshade.domain.user.model.User;
 import com.memoryshade.domain.user.repository.UserRepository;
 import com.memoryshade.global.exception.ExceptionList;
 import jakarta.transaction.Transactional;
+=======
+import com.memoryshade.domain.diary.model.Diary;
+import com.memoryshade.domain.diary.repository.DiaryRepository;
+import com.memoryshade.domain.user.model.User;
+>>>>>>> d5b3e06 (feat: 감정분석 서비스 구현 및 DB 연동)
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+<<<<<<< HEAD
 import java.util.List;
 
+=======
+
+@Slf4j
+>>>>>>> d5b3e06 (feat: 감정분석 서비스 구현 및 DB 연동)
 @Service
 @RequiredArgsConstructor
 @Transactional
 public class DiaryService {
+<<<<<<< HEAD
 
     private final DiaryRepository diaryRepository;
     private final UserRepository userRepository;
@@ -74,3 +88,16 @@ public class DiaryService {
         return DiaryUpdateShareResponseDto.fromDiary(diary);
     }
 }
+=======
+  private final DiaryRepository diaryRepository;
+
+  @Transactional
+  public Diary saveDiary(User user, String content) {
+    return diaryRepository.save(Diary.builder()
+        .user(user)
+        .contentStt(content)
+        .diaryDate(LocalDate.now())
+        .build());
+  }
+}
+>>>>>>> d5b3e06 (feat: 감정분석 서비스 구현 및 DB 연동)

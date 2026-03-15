@@ -32,6 +32,15 @@ public class EmotionAnalysis {
     @Column(name = "anger_score")
     private Integer angerScore;
 
+    @Column(name = "anxiety_score") // 추가
+    private Integer anxietyScore;
+
+    @Column(name = "embarrassment_score") // 추가
+    private Integer embarrassmentScore;
+
+    @Column(name = "hurt_score") // 추가
+    private Integer hurtScore;
+
     @Column(name = "neutral_score")
     private Integer neutralScore;
 
@@ -39,11 +48,15 @@ public class EmotionAnalysis {
     private LocalDateTime analyzedAt;
 
     @Builder
-    public EmotionAnalysis(Diary diary, Integer joyScore, Integer sadnessScore, Integer angerScore, Integer neutralScore) {
+    public EmotionAnalysis(Diary diary, Integer joyScore, Integer sadnessScore, Integer angerScore,
+        Integer anxietyScore, Integer embarrassmentScore, Integer hurtScore, Integer neutralScore) {
         this.diary = diary;
         this.joyScore = joyScore;
         this.sadnessScore = sadnessScore;
         this.angerScore = angerScore;
+        this.anxietyScore = anxietyScore;
+        this.embarrassmentScore = embarrassmentScore;
+        this.hurtScore = hurtScore;
         this.neutralScore = neutralScore;
         this.analyzedAt = LocalDateTime.now();
     }

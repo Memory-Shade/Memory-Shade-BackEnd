@@ -27,6 +27,7 @@ public class SecurityConfig {
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/emotions/**").permitAll() // [추가] 일기 API 임시 허용
                         .requestMatchers(
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
