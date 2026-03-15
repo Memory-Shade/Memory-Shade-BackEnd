@@ -2,6 +2,7 @@ package com.memoryshade.domain.guardianLink.controller;
 
 import com.memoryshade.domain.guardianLink.dto.GuardianLinkCreateRequestDto;
 import com.memoryshade.domain.guardianLink.dto.GuardianLinkCreateResponseDto;
+import com.memoryshade.domain.guardianLink.dto.GuardianLinkGetResponseDto;
 import com.memoryshade.domain.guardianLink.service.GuardianLinkService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
@@ -11,21 +12,29 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping("/api")
 @RequiredArgsConstructor
 @SecurityRequirement(name = "bearerAuth")
 public class GuardianLinkController {
 
     private final GuardianLinkService guardianLinkService;
 
-    @PostMapping("/{userId}/guardian-relations")
+    @PostMapping("/guardian-links")
     public ResponseEntity<GuardianLinkCreateResponseDto> createGuardianRelation(
             @AuthenticationPrincipal Long loginUserId,
-            @PathVariable Long userId,
             @Valid @RequestBody GuardianLinkCreateRequestDto request
     ) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(guardianLinkService.createGuardianRelation(loginUserId, userId, request));
+                .body(guardianLinkService.createGuardianLink(loginUserId, request));
+    }
+
+    @GetMapping("/guardian-links/me")
+    public ResponseEntity<List<GuardianLinkGetResponseDto>> getMeGuardianLinks(
+            @AuthenticationPrincipal Long loginUserId
+    ) {
+        return ResponseEntity.ok(guardianLinkService.getAllGuardianLink(loginUserId));
     }
 }
