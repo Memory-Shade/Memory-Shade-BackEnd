@@ -36,4 +36,13 @@ public interface ScheduleRepository extends Repository<Schedule, Long> {
             @Param("start") LocalDateTime start,
             @Param("end") LocalDateTime end
     );
+
+    @Query("""
+        select s
+        from Schedule s
+        where s.alarmTime <= :now
+          and s.notifiedAt is null
+        order by s.alarmTime asc
+        """)
+    List<Schedule> findSchedulesToNotify(@Param("now") LocalDateTime now);
 }
