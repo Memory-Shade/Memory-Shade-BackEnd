@@ -27,7 +27,7 @@ public class GpsController {
             @PathVariable Long userId,
             @Valid @RequestBody GpsRequestDto request
     ) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(gpsService.Create(loginUserId, userId, request));
+        return ResponseEntity.status(HttpStatus.CREATED).body(gpsService.create(loginUserId, userId, request));
     }
 
     @GetMapping("/{userId}/safe-zones")
