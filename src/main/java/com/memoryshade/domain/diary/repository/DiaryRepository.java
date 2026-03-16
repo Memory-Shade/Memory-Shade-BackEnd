@@ -13,6 +13,10 @@ public interface DiaryRepository extends Repository<Diary, Long> {
 
     Optional<Diary> findByDiaryIdAndUserUserId(Long diaryId, Long userId);
 
+    Diary save(Diary diary);
+
+    Optional<Diary> findById(Long diaryId);
+
     default Diary getDiary(Long diaryId, Long userId) {
         return findByDiaryIdAndUserUserId(diaryId, userId)
                 .orElseThrow(() -> new ExceptionList(DiaryErrorCode.DIARY_NOT_FOUND));
