@@ -49,4 +49,8 @@ public class User {
     public void updateLastLoggedAt() {
         this.lastLoggedAt = LocalDateTime.now();
     }
+
+    public void clearFcmToken() {
+        this.fcmToken = null;
+    }
 }

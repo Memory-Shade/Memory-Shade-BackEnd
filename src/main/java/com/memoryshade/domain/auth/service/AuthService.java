@@ -47,4 +47,14 @@ public class AuthService {
         String token = jwtProvider.generateAccessToken(user.getUserId(), user.getPhoneNumber());
         return AuthResponseDto.of(user, token);
     }
+
+    @Transactional
+    public void logout(Long loginUserId) {
+        if (loginUserId == null) {
+            throw new ExceptionList(AuthErrorCode.UNAUTHORIZED_USER);
+        }
+
+        User user = userRepository.getByUserId(loginUserId);
+        user.clearFcmToken();
+    }
 }
