@@ -6,6 +6,7 @@ import com.memoryshade.domain.diary.model.Diary;
 import com.memoryshade.domain.diary.repository.DiaryRepository;
 import com.memoryshade.domain.guardianLink.exception.GuardianLinkErrorCode;
 import com.memoryshade.domain.guardianLink.repository.GuardianLinkRepository;
+import com.memoryshade.domain.notification.service.NotificationService;
 import com.memoryshade.domain.user.model.Role;
 import com.memoryshade.domain.user.model.User;
 import com.memoryshade.domain.user.repository.UserRepository;
@@ -25,6 +26,7 @@ public class DiaryService {
     private final DiaryRepository diaryRepository;
     private final UserRepository userRepository;
     private final GuardianLinkRepository guardianLinkRepository;
+    private final NotificationService notificationService;
 
     public List<DiaryReadResponseDto> getAllDiariesByDate(Long loginUserId, LocalDate date) {
         userRepository.getByUserId(loginUserId);
@@ -63,13 +65,18 @@ public class DiaryService {
     }
 
     public DiaryUpdateShareResponseDto updateDiaryShare(Long loginUserId, Long diaryId) {
-        userRepository.getByUserId(loginUserId);
+        User user = userRepository.getByUserId(loginUserId);
 
         Diary diary = diaryRepository.getDiary(diaryId, loginUserId);
         if (diary.isShared()) {
             diary.unshare();
         } else {
             diary.share();
+            notificationService.createDiarySharedNotifications(
+                    user.getUserId(),
+                    user.getName(),
+                    diary.getDiaryDate()
+            );
         }
         return DiaryUpdateShareResponseDto.fromDiary(diary);
     }
