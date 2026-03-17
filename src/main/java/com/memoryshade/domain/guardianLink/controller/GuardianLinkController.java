@@ -23,7 +23,7 @@ public class GuardianLinkController {
     private final GuardianLinkService guardianLinkService;
 
     @PostMapping("/guardian-links")
-    public ResponseEntity<GuardianLinkCreateResponseDto> createGuardianRelation(
+    public ResponseEntity<GuardianLinkCreateResponseDto> createGuardianLink(
             @AuthenticationPrincipal Long loginUserId,
             @Valid @RequestBody GuardianLinkCreateRequestDto request
     ) {
@@ -31,10 +31,17 @@ public class GuardianLinkController {
                 .body(guardianLinkService.createGuardianLink(loginUserId, request));
     }
 
-    @GetMapping("/guardian-links/me")
-    public ResponseEntity<List<GuardianLinkGetResponseDto>> getMeGuardianLinks(
+    @GetMapping("/guardian-links/me/users")
+    public ResponseEntity<List<GuardianLinkGetResponseDto>> getAllLinkUsersMe(
             @AuthenticationPrincipal Long loginUserId
     ) {
-        return ResponseEntity.ok(guardianLinkService.getAllGuardianLink(loginUserId));
+        return ResponseEntity.ok(guardianLinkService.getAllLinkUser(loginUserId));
+    }
+
+    @GetMapping("/guardian-links/me/guardians")
+    public ResponseEntity<List<GuardianLinkGetResponseDto>> getAllLinkGuardiansMe(
+            @AuthenticationPrincipal Long loginUserId
+    ) {
+        return ResponseEntity.ok(guardianLinkService.getAllLinkGuardian(loginUserId));
     }
 }

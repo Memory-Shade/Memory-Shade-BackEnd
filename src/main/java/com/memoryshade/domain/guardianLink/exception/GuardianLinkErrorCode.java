@@ -11,6 +11,8 @@ public enum GuardianLinkErrorCode implements ErrorCode {
 
     UNAUTHORIZED_GUARDIAN(HttpStatus.UNAUTHORIZED, "인증된 보호자 정보가 없습니다"),
     GUARDIAN_ONLY(HttpStatus.FORBIDDEN, "보호자만 사용자 연결이 가능합니다"),
+    UNAUTHORIZED_USER(HttpStatus.UNAUTHORIZED, "인증된 사용자 정보가 없습니다"),
+    USER_ONLY(HttpStatus.FORBIDDEN, "사용자만 본인 보호자 목록을 조회할 수 있습니다"),
     TARGET_USER_ONLY(HttpStatus.BAD_REQUEST, "연결 대상은 USER 역할이어야 합니다"),
     PHONE_NUMBER_MISMATCH(HttpStatus.BAD_REQUEST, "요청 전화번호와 대상 사용자가 일치하지 않습니다"),
     SELF_LINK_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "본인 계정은 연결할 수 없습니다"),

@@ -54,7 +54,7 @@ public class GuardianLinkService {
     }
 
     @Transactional(readOnly = true)
-    public List<GuardianLinkGetResponseDto> getAllGuardianLink(Long loginUserId) {
+    public List<GuardianLinkGetResponseDto> getAllLinkUser(Long loginUserId) {
         if (loginUserId == null) {
             throw new ExceptionList(GuardianLinkErrorCode.UNAUTHORIZED_GUARDIAN);
         }
@@ -66,6 +66,23 @@ public class GuardianLinkService {
 
         return guardianLinkRepository.findAllByGuardian_UserId(loginUserId).stream()
                 .map(GuardianLink::getUser)
+                .map(GuardianLinkGetResponseDto::fromUser)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<GuardianLinkGetResponseDto> getAllLinkGuardian(Long loginUserId) {
+        if (loginUserId == null) {
+            throw new ExceptionList(GuardianLinkErrorCode.UNAUTHORIZED_USER);
+        }
+
+        User user = userRepository.getByUserId(loginUserId);
+        if (user.getRole() != Role.USER) {
+            throw new ExceptionList(GuardianLinkErrorCode.USER_ONLY);
+        }
+
+        return guardianLinkRepository.findAllByUser_UserId(loginUserId).stream()
+                .map(GuardianLink::getGuardian)
                 .map(GuardianLinkGetResponseDto::fromUser)
                 .toList();
     }

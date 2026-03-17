@@ -26,4 +26,6 @@ public interface GuardianLinkRepository extends Repository<GuardianLink, Long> {
     }
 
     List<GuardianLink> findAllByGuardian_UserId(Long guardianId);
+
+    List<GuardianLink> findAllByUser_UserId(Long userId);
 }
