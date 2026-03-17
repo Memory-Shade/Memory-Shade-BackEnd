@@ -44,4 +44,13 @@ public class GuardianLinkController {
     ) {
         return ResponseEntity.ok(guardianLinkService.getAllLinkGuardian(loginUserId));
     }
+
+    @DeleteMapping("/guardian-links/users/{userId}")
+    public ResponseEntity<Void> deleteGuardianLink(
+            @AuthenticationPrincipal Long loginUserId,
+            @PathVariable Long userId
+    ) {
+        guardianLinkService.deleteGuardianLink(loginUserId, userId);
+        return ResponseEntity.noContent().build();
+    }
 }

@@ -86,4 +86,24 @@ public class GuardianLinkService {
                 .map(GuardianLinkGetResponseDto::fromUser)
                 .toList();
     }
+
+    @Transactional
+    public void deleteGuardianLink(Long loginUserId, Long userId) {
+        if (loginUserId == null) {
+            throw new ExceptionList(GuardianLinkErrorCode.UNAUTHORIZED_GUARDIAN);
+        }
+
+        User guardian = userRepository.getByUserId(loginUserId);
+        if (guardian.getRole() != Role.GUARDIAN) {
+            throw new ExceptionList(GuardianLinkErrorCode.GUARDIAN_ONLY);
+        }
+
+        User user = userRepository.getByUserId(userId);
+        if (user.getRole() != Role.USER) {
+            throw new ExceptionList(GuardianLinkErrorCode.TARGET_USER_ONLY);
+        }
+
+        GuardianLink guardianLink = guardianLinkRepository.getByUserIdAndGuardianId(userId, loginUserId);
+        guardianLinkRepository.delete(guardianLink);
+    }
 }
