@@ -47,9 +47,14 @@ public class Schedule {
         this.updatedAt = LocalDateTime.now();
     }
 
-    public void updateSchedule(String title, LocalDateTime alarmTime) {
+    public void updateTitle(String title) {
         this.title = title;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    public void updateAlarmTime(LocalDateTime alarmTime) {
         this.alarmTime = alarmTime;
+        this.notifiedAt = null;
         this.updatedAt = LocalDateTime.now();
     }
 

@@ -47,7 +47,15 @@ public class ScheduleService {
 
     public ScheduleResponseDto update(Long loginUserId, Long scheduleId, ScheduleRequestDto request) {
         Schedule schedule = scheduleRepository.getByScheduleIdAndUserId(scheduleId, loginUserId);
-        schedule.updateSchedule(request.title(), request.alarmTime());
+
+        if (!schedule.getTitle().equals(request.title())) {
+            schedule.updateTitle(request.title());
+        }
+
+        if (!schedule.getAlarmTime().equals(request.alarmTime())) {
+            schedule.updateAlarmTime(request.alarmTime());
+        }
+
         return ScheduleResponseDto.fromSchedule(schedule);
     }
 
