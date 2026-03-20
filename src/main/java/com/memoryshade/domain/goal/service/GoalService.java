@@ -29,11 +29,7 @@ public class GoalService {
 
         User user = userRepository.getByUserId(loginUserId);
 
-        Goal goal = goalRepository.save(
-                Goal.builder()
-                .user(user)
-                .title(request.title())
-                .build());
+        Goal goal = goalRepository.save(request.toGoal(user));
 
         return GoalCreateResponseDto.fromGoal(goal);
     }
