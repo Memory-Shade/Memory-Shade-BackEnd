@@ -3,6 +3,7 @@ package com.memoryshade.domain.notification.controller;
 import com.memoryshade.domain.notification.dto.NotificationCreateRequestDto;
 import com.memoryshade.domain.notification.dto.NotificationResponseDto;
 import com.memoryshade.domain.notification.dto.NotificationUpdateReadRequestDto;
+import com.memoryshade.domain.notification.model.NotiType;
 import com.memoryshade.domain.notification.service.NotificationService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
@@ -31,8 +32,10 @@ public class NotificationController {
 
     @GetMapping("/me")
     public ResponseEntity<List<NotificationResponseDto>> getMyNotifications(
-            @AuthenticationPrincipal Long loginUserId) {
-        return ResponseEntity.ok(notificationService.getMyNotifications(loginUserId));
+            @AuthenticationPrincipal Long loginUserId,
+            @RequestParam(required = false) NotiType type,
+            @RequestParam(required = false) Boolean isRead) {
+        return ResponseEntity.ok(notificationService.getMyNotifications(loginUserId, type, isRead));
     }
 
     @PutMapping("/{notificationId}")

@@ -33,9 +33,8 @@ public class NotificationService {
         return NotificationResponseDto.fromNotification(notification);
     }
 
-    public List<NotificationResponseDto> getMyNotifications(Long loginUserId) {
-        return notificationRepository.
-                findAllByUser_UserIdOrderByCreatedAtDesc(loginUserId)
+    public List<NotificationResponseDto> getMyNotifications(Long loginUserId, NotiType type, Boolean isRead) {
+        return notificationRepository.findByUserIdAndFilters(loginUserId, type, isRead)
                 .stream()
                 .map(NotificationResponseDto::fromNotification)
                 .toList();
