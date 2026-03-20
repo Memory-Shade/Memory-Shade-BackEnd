@@ -20,6 +20,9 @@ public record ScheduleResponseDto(
         @JsonProperty("alarm_time")
         LocalDateTime alarmTime,
 
+        @JsonProperty("notified_at")
+        LocalDateTime notifiedAt,
+
         @JsonProperty("updated_at")
         LocalDateTime updatedAt
 ) {
@@ -29,6 +32,7 @@ public record ScheduleResponseDto(
                 schedule.getUser().getUserId(),
                 schedule.getTitle(),
                 schedule.getAlarmTime(),
+                schedule.getNotifiedAt(),
                 schedule.getUpdatedAt()
         );
     }
