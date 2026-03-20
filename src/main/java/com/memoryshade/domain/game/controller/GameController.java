@@ -1,8 +1,8 @@
 package com.memoryshade.domain.game.controller;
 
+import com.memoryshade.domain.game.dto.GameCreateResultRequestDto;
+import com.memoryshade.domain.game.dto.GameCreateResultResponseDto;
 import com.memoryshade.domain.game.dto.GameResponseDto;
-import com.memoryshade.domain.game.dto.GameUpdateScoreRequestDto;
-import com.memoryshade.domain.game.dto.GameUpdateScoreResponseDto;
 import com.memoryshade.domain.game.service.GameService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
@@ -20,17 +20,18 @@ public class GameController {
 
     private final GameService gameService;
 
-    @PostMapping
-    public ResponseEntity<GameResponseDto> createGame(
-            @AuthenticationPrincipal Long loginUserId) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(gameService.createGame(loginUserId));
+    @PostMapping("/result")
+    public ResponseEntity<GameCreateResultResponseDto> createGameResult(
+            @AuthenticationPrincipal Long loginUserId,
+            @Valid @RequestBody GameCreateResultRequestDto request) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(gameService.createGameResult(loginUserId, request));
     }
 
-    @PatchMapping("/{gameId}/result")
-    public ResponseEntity<GameUpdateScoreResponseDto> updateScore(
-            @AuthenticationPrincipal Long loginUserId,
-            @PathVariable Long gameId,
-            @Valid @RequestBody GameUpdateScoreRequestDto request) {
-        return ResponseEntity.status(HttpStatus.OK).body(gameService.updateScore(loginUserId, gameId, request));
+    @GetMapping("/me/best")
+    public ResponseEntity<GameResponseDto> getBestGame(
+            @AuthenticationPrincipal Long loginUserId) {
+        return ResponseEntity.ok(gameService.getBestGame(loginUserId));
     }
 }
+

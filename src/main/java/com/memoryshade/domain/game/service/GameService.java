@@ -1,8 +1,8 @@
 package com.memoryshade.domain.game.service;
 
+import com.memoryshade.domain.game.dto.GameCreateResultRequestDto;
+import com.memoryshade.domain.game.dto.GameCreateResultResponseDto;
 import com.memoryshade.domain.game.dto.GameResponseDto;
-import com.memoryshade.domain.game.dto.GameUpdateScoreRequestDto;
-import com.memoryshade.domain.game.dto.GameUpdateScoreResponseDto;
 import com.memoryshade.domain.game.model.Game;
 import com.memoryshade.domain.game.repository.GameRepository;
 import com.memoryshade.domain.user.model.User;
@@ -19,24 +19,24 @@ public class GameService {
     private final GameRepository gameRepository;
     private final UserRepository userRepository;
 
-    public GameResponseDto createGame(Long loginUserId) {
+    public GameCreateResultResponseDto createGameResult(Long loginUserId, GameCreateResultRequestDto request) {
+        boolean isBestRecord = gameRepository.findTopByUser_UserIdOrderByScoreAsc(loginUserId)
+                .map(bestGame -> request.score() < bestGame.getScore())
+                .orElse(true);
+
         User user = userRepository.getByUserId(loginUserId);
 
         Game game = Game.builder()
-                        .user(user)
-                        .score(0)
-                        .build();
+                .user(user)
+                .score(request.score())
+                .build();
 
         gameRepository.save(game);
-        return GameResponseDto.fromGame(game);
+        return GameCreateResultResponseDto.fromGame(game, isBestRecord);
     }
 
-    public GameUpdateScoreResponseDto updateScore(
-            Long loginUserId,
-            Long gameId,
-            GameUpdateScoreRequestDto request) {
-        Game game = gameRepository.getByGameIdAndUserId(gameId, loginUserId);
-        game.updateScore(request.score());
-        return GameUpdateScoreResponseDto.fromGame(game);
+    public GameResponseDto getBestGame(Long loginUserId) {
+        Game game = gameRepository.getBestByUserId(loginUserId);
+        return GameResponseDto.fromGame(game);
     }
 }

@@ -13,7 +13,14 @@ public interface GameRepository extends Repository<Game, Long> {
 
     Optional<Game> findByGameIdAndUser_UserId(Long gameId, Long userId);
 
+    Optional<Game> findTopByUser_UserIdOrderByScoreAsc(Long userId);
+
     default Game getByGameIdAndUserId(Long gameId, Long userId) {
         return findByGameIdAndUser_UserId(gameId, userId).orElseThrow(() -> new ExceptionList(GameErrorCode.GAME_NOT_FOUND));
+    }
+
+    default Game getBestByUserId(Long userId) {
+        return findTopByUser_UserIdOrderByScoreAsc(userId)
+                .orElseThrow(() -> new ExceptionList(GameErrorCode.GAME_NOT_FOUND));
     }
 }
