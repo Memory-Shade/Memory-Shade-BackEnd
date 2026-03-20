@@ -7,11 +7,13 @@ import com.memoryshade.domain.gps.model.Gps;
 import com.memoryshade.domain.user.model.User;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public record GpsRequestDto(
 
+        @NotBlank(message = "안전 반경 이름은 비어 있을 수 없습니다.")
         String title,
 
         @NotNull(message = "위도를 입력해주세요")

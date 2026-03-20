@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import com.memoryshade.domain.user.model.Role;
 import com.memoryshade.domain.user.model.User;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -27,6 +28,7 @@ public record SignUpRequestDto(
         @NotBlank(message = "이름을 입력해주세요")
         String name,
 
+        @NotNull(message = "타입은 필수입니다.")
         Role role
 ) {
         public User toUser(PasswordEncoder encoder) {
