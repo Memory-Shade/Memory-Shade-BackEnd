@@ -1,17 +1,14 @@
 package com.memoryshade.domain.schedule.service;
 
-import com.memoryshade.domain.notification.dto.NotificationCreateRequestDto;
-import com.memoryshade.domain.notification.model.NotiType;
-import com.memoryshade.domain.notification.service.NotificationService;
 import com.memoryshade.domain.schedule.dto.ScheduleRequestDto;
 import com.memoryshade.domain.schedule.dto.ScheduleResponseDto;
 import com.memoryshade.domain.schedule.model.Schedule;
 import com.memoryshade.domain.schedule.repository.ScheduleRepository;
 import com.memoryshade.domain.user.model.User;
 import com.memoryshade.domain.user.repository.UserRepository;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -19,11 +16,12 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
+@Transactional(readOnly = true)
 public class ScheduleService {
     private final ScheduleRepository scheduleRepository;
     private final UserRepository userRepository;
 
+    @Transactional
     public ScheduleResponseDto create(Long loginUserId, ScheduleRequestDto request) {
         User user = userRepository.getByUserId(loginUserId);
 
@@ -45,6 +43,7 @@ public class ScheduleService {
                 .toList();
     }
 
+    @Transactional
     public ScheduleResponseDto update(Long loginUserId, Long scheduleId, ScheduleRequestDto request) {
         Schedule schedule = scheduleRepository.getByScheduleIdAndUserId(scheduleId, loginUserId);
 
@@ -59,6 +58,7 @@ public class ScheduleService {
         return ScheduleResponseDto.fromSchedule(schedule);
     }
 
+    @Transactional
     public void delete(Long loginUserId, Long scheduleId) {
         Schedule schedule = scheduleRepository.getByScheduleIdAndUserId(scheduleId, loginUserId);
         scheduleRepository.delete(schedule);

@@ -7,18 +7,19 @@ import com.memoryshade.domain.game.model.Game;
 import com.memoryshade.domain.game.repository.GameRepository;
 import com.memoryshade.domain.user.model.User;
 import com.memoryshade.domain.user.repository.UserRepository;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
+@Transactional(readOnly = true)
 public class GameService {
 
     private final GameRepository gameRepository;
     private final UserRepository userRepository;
 
+    @Transactional
     public GameCreateResultResponseDto createGameResult(Long loginUserId, GameCreateResultRequestDto request) {
         boolean isBestRecord = gameRepository.findTopByUser_UserIdOrderByScoreAsc(loginUserId)
                 .map(bestGame -> request.score() < bestGame.getScore())

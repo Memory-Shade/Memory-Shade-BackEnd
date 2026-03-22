@@ -11,16 +11,16 @@ import com.memoryshade.domain.user.model.Role;
 import com.memoryshade.domain.user.model.User;
 import com.memoryshade.domain.user.repository.UserRepository;
 import com.memoryshade.global.exception.ExceptionList;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
+@Transactional(readOnly = true)
 public class DiaryService {
 
     private final DiaryRepository diaryRepository;
@@ -64,6 +64,7 @@ public class DiaryService {
                 .toList();
     }
 
+    @Transactional
     public DiaryUpdateShareResponseDto updateDiaryShare(Long loginUserId, Long diaryId) {
         User user = userRepository.getByUserId(loginUserId);
 

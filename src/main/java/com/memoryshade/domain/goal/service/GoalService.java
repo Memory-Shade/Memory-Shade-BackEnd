@@ -9,9 +9,9 @@ import com.memoryshade.domain.goal.repository.GoalRecordRepository;
 import com.memoryshade.domain.goal.repository.GoalRepository;
 import com.memoryshade.domain.user.model.User;
 import com.memoryshade.domain.user.repository.UserRepository;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -19,6 +19,7 @@ import java.time.temporal.ChronoUnit;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class GoalService {
     private final GoalRepository goalRepository;
     private final UserRepository userRepository;
@@ -55,5 +56,4 @@ public class GoalService {
 
         return new GoalProgressResponseDto(startDate, endDate, progress);
     }
-
 }
