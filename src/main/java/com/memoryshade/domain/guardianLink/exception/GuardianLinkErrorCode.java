@@ -18,7 +18,10 @@ public enum GuardianLinkErrorCode implements ErrorCode {
     SELF_LINK_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "본인 계정은 연결할 수 없습니다"),
     ALREADY_LINKED(HttpStatus.CONFLICT, "이미 연결된 사용자입니다"),
     GUARDIAN_LINK_NOT_FOUND(HttpStatus.FORBIDDEN, "해당 사용자와 연결된 보호자가 아닙니다"),
-    USER_NOT_FOUND_BY_PHONE_NUMBER(HttpStatus.NOT_FOUND, "해당 전화번호의 사용자를 찾을 수 없습니다.");
+    USER_NOT_FOUND_BY_PHONE_NUMBER(HttpStatus.NOT_FOUND, "해당 전화번호의 사용자를 찾을 수 없습니다."),
+    GUARDIAN_LINK_REQUEST_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 연결 요청을 찾을 수 없습니다."),
+    ALREADY_REQUESTED(HttpStatus.CONFLICT, "이미 대기 중인 연결 요청이 있습니다."),
+    REQUEST_ALREADY_PROCESSED(HttpStatus.CONFLICT, "이미 처리된 연결 요청입니다.");
 
     private final HttpStatus httpStatus;
     private final String message;

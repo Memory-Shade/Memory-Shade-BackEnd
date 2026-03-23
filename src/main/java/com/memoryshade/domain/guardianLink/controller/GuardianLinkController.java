@@ -22,15 +22,6 @@ public class GuardianLinkController {
 
     private final GuardianLinkService guardianLinkService;
 
-    @PostMapping("/guardian-links")
-    public ResponseEntity<GuardianLinkCreateResponseDto> createGuardianLink(
-            @AuthenticationPrincipal Long loginUserId,
-            @Valid @RequestBody GuardianLinkCreateRequestDto request
-    ) {
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(guardianLinkService.createGuardianLink(loginUserId, request));
-    }
-
     @GetMapping("/guardian-links/me/users")
     public ResponseEntity<List<GuardianLinkGetResponseDto>> getAllLinkUsersMe(
             @AuthenticationPrincipal Long loginUserId

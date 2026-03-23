@@ -10,22 +10,23 @@ import com.memoryshade.domain.notification.model.Notification;
 import com.memoryshade.domain.notification.repository.NotificationRepository;
 import com.memoryshade.domain.user.model.User;
 import com.memoryshade.domain.user.repository.UserRepository;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
+@Transactional(readOnly = true)
 public class NotificationService {
 
     private final NotificationRepository notificationRepository;
     private final UserRepository userRepository;
     private final GuardianLinkRepository guardianLinkRepository;
 
+    @Transactional
     public NotificationResponseDto create(Long loginUserId, NotificationCreateRequestDto request) {
 
         User user = userRepository.getByUserId(loginUserId);
@@ -40,6 +41,7 @@ public class NotificationService {
                 .toList();
     }
 
+    @Transactional
     public NotificationResponseDto updateRead(
             Long loginUserId,
             Long notiId,
@@ -61,5 +63,18 @@ public class NotificationService {
                         .notiType(NotiType.DIARY_SHARED)
                         .build())
                 .forEach(notificationRepository::save);
+    }
+
+    @Transactional
+    public void createGuardianLinkRequestNotification(Long targetUserId, String guardianName) {
+        User user = userRepository.getByUserId(targetUserId);
+
+        Notification notification = Notification.builder()
+                .user(user)
+                .content(guardianName + "님이 보호자 연결을 요청했습니다.")
+                .notiType(NotiType.GUARDIAN_LINK_REQUEST)
+                .build();
+
+        notificationRepository.save(notification);
     }
 }
