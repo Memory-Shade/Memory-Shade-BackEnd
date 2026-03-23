@@ -1,5 +1,6 @@
 package com.memoryshade.domain.diary.service;
 
+import com.memoryshade.domain.diary.dto.DiaryCreateFromChatResponseDto;
 import com.memoryshade.domain.diary.dto.DiaryReadResponseDto;
 import com.memoryshade.domain.diary.dto.DiaryUpdateShareResponseDto;
 import com.memoryshade.domain.diary.model.Diary;
@@ -72,5 +73,25 @@ public class DiaryService {
             diary.share();
         }
         return DiaryUpdateShareResponseDto.fromDiary(diary);
+    }
+
+    public DiaryCreateFromChatResponseDto createDiaryFromChat(
+        Long loginUserId,
+        String contentStt,
+        String contentSummary,
+        LocalDate diaryDate
+    ) {
+        User user = userRepository.getByUserId(loginUserId);
+
+        Diary diary = Diary.builder()
+            .user(user)
+            .contentStt(contentStt)
+            .contentSummary(contentSummary)
+            .diaryDate(diaryDate)
+            .build();
+
+        Diary savedDiary = diaryRepository.save(diary);
+
+        return DiaryCreateFromChatResponseDto.fromDiary(savedDiary);
     }
 }
