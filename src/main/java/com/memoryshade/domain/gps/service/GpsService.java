@@ -10,21 +10,22 @@ import com.memoryshade.domain.user.model.Role;
 import com.memoryshade.domain.user.model.User;
 import com.memoryshade.domain.user.repository.UserRepository;
 import com.memoryshade.global.exception.ExceptionList;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
+@Transactional(readOnly = true)
 public class GpsService {
 
     private final GpsRepository gpsRepository;
     private final UserRepository userRepository;
     private final GuardianLinkRepository guardianLinkRepository;
 
+    @Transactional
     public GpsResponseDto create(Long loginUserId, Long userId, GpsRequestDto request) {
 
         if (loginUserId == null) {
@@ -76,6 +77,7 @@ public class GpsService {
                 .toList();
     }
 
+    @Transactional
     public GpsResponseDto update(Long loginUserId, Long userId, Long zoneId, GpsRequestDto request) {
         if (loginUserId == null) {
             throw new ExceptionList(GpsErrorCode.UNAUTHORIZED_GUARDIAN); //TODO: 이거 user로 해도 될거 같은데
@@ -105,6 +107,7 @@ public class GpsService {
         return GpsResponseDto.fromGps(gps);
     }
 
+    @Transactional
     public void delete(Long loginUserId, Long userId, Long zoneId) {
         if (loginUserId == null) {
             throw new ExceptionList(GpsErrorCode.UNAUTHORIZED_GUARDIAN); //TODO: 이거 user로 해도 될거 같은데

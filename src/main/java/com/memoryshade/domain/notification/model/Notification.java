@@ -27,7 +27,7 @@ public class Notification {
     private String content;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "noti_type", nullable = false)
+    @Column(name = "noti_type", nullable = false, length = 50)
     private NotiType notiType;
 
     @Column(name = "is_read", nullable = false)
