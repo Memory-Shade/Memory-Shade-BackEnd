@@ -9,8 +9,5 @@ public interface EmotionAnalysisRepository extends Repository<EmotionAnalysis, L
   EmotionAnalysis save(EmotionAnalysis emotionAnalysis);
 
   Optional<EmotionAnalysis> findByDiary(Diary diary);
-
-  void delete(EmotionAnalysis emotionAnalysis);
-
-  void flush();
+  
 }

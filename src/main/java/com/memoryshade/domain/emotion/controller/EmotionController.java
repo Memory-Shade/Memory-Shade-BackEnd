@@ -1,29 +1,30 @@
 package com.memoryshade.domain.emotion.controller;
 
-import com.memoryshade.domain.diary.exception.DiaryErrorCode;
-import com.memoryshade.domain.diary.model.Diary;
 import com.memoryshade.domain.diary.repository.DiaryRepository;
-import com.memoryshade.domain.emotion.dto.EmotionRequest;
 import com.memoryshade.domain.emotion.service.EmotionService;
-import com.memoryshade.global.exception.ExceptionList;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/emotions")
 @RequiredArgsConstructor
+@SecurityRequirement(name = "bearerAuth")
 public class EmotionController {
 
   private final EmotionService emotionService;
   private final DiaryRepository diaryRepository;
-  @PostMapping("/analyze")
-  public ResponseEntity<String> analyze(@RequestBody EmotionRequest request) {
-    Diary diary = diaryRepository.findById(request.diaryId())
-        .orElseThrow(() -> new ExceptionList(DiaryErrorCode.DIARY_NOT_FOUND));
+  @PostMapping("/{diaryId}/analyze")
+  public ResponseEntity<String> analyze(
+      @AuthenticationPrincipal Long loginUserId,
+      @PathVariable Long diaryId
+  ) {
+    emotionService.createEmotionAnalysis(loginUserId, diaryId);
 
-    emotionService.analyzeAndSave(diary, diary.getContentStt());
-
-    return ResponseEntity.ok(request.diaryId() + "번 일기에 대한 감정 분석이 시작되었습니다.");
+    return ResponseEntity.ok(diaryId + "번 일기에 대한 감정 분석이 시작되었습니다.");
   }
 }
