@@ -10,12 +10,13 @@ import java.util.List;
 import java.util.Optional;
 
 public interface DiaryRepository extends Repository<Diary, Long> {
+    Diary save(Diary diary);
 
     Optional<Diary> findByDiaryIdAndUserUserId(Long diaryId, Long userId);
 
     default Diary getDiary(Long diaryId, Long userId) {
         return findByDiaryIdAndUserUserId(diaryId, userId)
-                .orElseThrow(() -> new ExceptionList(DiaryErrorCode.DIARY_NOT_FOUND));
+            .orElseThrow(() -> new ExceptionList(DiaryErrorCode.DIARY_NOT_FOUND));
     }
 
     List<Diary> findAllByUser_UserIdAndDiaryDate(Long userId, LocalDate date);
