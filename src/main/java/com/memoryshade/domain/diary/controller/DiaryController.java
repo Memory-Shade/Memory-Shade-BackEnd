@@ -21,11 +21,23 @@ public class DiaryController {
 
     private final DiaryService diaryService;
 
-    @GetMapping("diaries/me")
+    @GetMapping("/diaries/me")
     public ResponseEntity<List<DiaryReadResponseDto>> getAllDiariesByDate(
             @AuthenticationPrincipal Long loginUserId,
-            @RequestParam("date") LocalDate date) {
+            @RequestParam("date") LocalDate date
+    ) {
         return ResponseEntity.ok(diaryService.getAllDiariesByDate(loginUserId, date));
+    }
+
+    @GetMapping("/diaries/me/range")
+    public ResponseEntity<List<DiaryReadResponseDto>> getAllDiariesByDateRange(
+            @AuthenticationPrincipal Long loginUserId,
+            @RequestParam("startDate") LocalDate startDate,
+            @RequestParam("endDate") LocalDate endDate
+    ) {
+        return ResponseEntity.ok(
+                diaryService.getAllDiariesByDateRange(loginUserId, startDate, endDate)
+        );
     }
 
     @GetMapping("/users/{userId}/diaries")
@@ -36,6 +48,18 @@ public class DiaryController {
     ) {
         return ResponseEntity.ok(
                 diaryService.getUserSharedDiariesByDate(loginUserId, userId, date)
+        );
+    }
+
+    @GetMapping("/users/{userId}/diaries/range")
+    public ResponseEntity<List<DiaryReadResponseDto>> getUserSharedDiariesByDateRange(
+            @AuthenticationPrincipal Long loginUserId,
+            @PathVariable Long userId,
+            @RequestParam("startDate") LocalDate startDate,
+            @RequestParam("endDate") LocalDate endDate
+    ) {
+        return ResponseEntity.ok(
+                diaryService.getUserSharedDiariesByDateRange(loginUserId, userId, startDate, endDate)
         );
     }
 
