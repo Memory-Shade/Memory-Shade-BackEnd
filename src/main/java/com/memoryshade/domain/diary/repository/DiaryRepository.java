@@ -23,5 +23,17 @@ public interface DiaryRepository extends Repository<Diary, Long> {
 
     List<Diary> findAllByUser_UserIdAndDiaryDateAndIsSharedTrue(Long userId, LocalDate date);
 
+    List<Diary> findAllByUser_UserIdAndDiaryDateBetweenOrderByDiaryDateAsc(
+            Long userId,
+            LocalDate startDate,
+            LocalDate endDate
+    );
+
+    List<Diary> findAllByUser_UserIdAndDiaryDateBetweenAndIsSharedTrueOrderByDiaryDateAsc(
+            Long userId,
+            LocalDate startDate,
+            LocalDate endDate
+    );
+
     Optional<Diary> findTopByUser_UserIdAndDiaryDateOrderByCreatedAtDesc(Long userId, LocalDate date);
 }
