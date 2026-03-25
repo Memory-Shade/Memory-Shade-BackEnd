@@ -1,8 +1,10 @@
 package com.memoryshade.domain.diary.controller;
 
+import com.memoryshade.domain.diary.dto.DiaryMediaReadResponseDto;
 import com.memoryshade.domain.diary.dto.DiaryReadResponseDto;
 import com.memoryshade.domain.diary.dto.DiaryUpdateShareRequestDto;
 import com.memoryshade.domain.diary.dto.DiaryUpdateShareResponseDto;
+import com.memoryshade.domain.diary.service.DiaryMediaService;
 import com.memoryshade.domain.diary.service.DiaryService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +22,7 @@ import java.util.List;
 public class DiaryController {
 
     private final DiaryService diaryService;
+    private final DiaryMediaService diaryMediaService;
 
     @GetMapping("/diaries/me")
     public ResponseEntity<List<DiaryReadResponseDto>> getAllDiariesByDate(
@@ -70,4 +73,16 @@ public class DiaryController {
             @RequestBody DiaryUpdateShareRequestDto request) { //TODO: request 안 받아도 될것 같은데
         return ResponseEntity.ok(diaryService.updateDiaryShare(loginUserId, diaryId));
     }
+
+
+    @GetMapping("/diaries/{diaryId}/media")
+    public ResponseEntity<List<DiaryMediaReadResponseDto>> getDiaryMedias(
+        @AuthenticationPrincipal Long loginUserId,
+        @PathVariable Long diaryId
+    ) {
+        return ResponseEntity.ok(
+            diaryMediaService.getDiaryMedias(loginUserId, diaryId)
+        );
+    }
+
 }

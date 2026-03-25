@@ -49,23 +49,33 @@ public class DiaryMediaService {
     User loginUser = userRepository.getByUserId(loginUserId);
 
     Diary diary = diaryRepository.findById(diaryId)
-        .orElseThrow(() -> new IllegalArgumentException("일기를 찾을 수 없습니다."));
+        .orElseThrow(() -> new ExceptionList(DiaryErrorCode.DIARY_NOT_FOUND));
 
     if (loginUser.getRole() == Role.USER) {
-      if (!diary.getUser().getUserId().equals(loginUserId)) {
-        throw new ExceptionList(GuardianLinkErrorCode.TARGET_USER_ONLY);
-      }
+      validateUserAccess(loginUserId, diary);
     } else if (loginUser.getRole() == Role.GUARDIAN) {
-      guardianLinkRepository.validateLinked(diary.getUser().getUserId(), loginUserId);
-
-      if (!diary.isShared()) {
-        throw new IllegalArgumentException("공유되지 않은 일기입니다.");
-      }
+      validateGuardianAccess(loginUserId, diary);
+    } else {
+      throw new ExceptionList(GuardianLinkErrorCode.UNAUTHORIZED_GUARDIAN);
     }
 
     return diaryMediaRepository.findAllByDiary_DiaryId(diaryId)
         .stream()
         .map(DiaryMediaReadResponseDto::fromDiaryMedia)
         .toList();
+  }
+
+  private void validateUserAccess(Long loginUserId, Diary diary) {
+    if (!diary.getUser().getUserId().equals(loginUserId)) {
+      throw new ExceptionList(GuardianLinkErrorCode.TARGET_USER_ONLY);
+    }
+  }
+
+  private void validateGuardianAccess(Long loginGuardianId, Diary diary) {
+    guardianLinkRepository.validateLinked(diary.getUser().getUserId(), loginGuardianId);
+
+    if (!diary.isShared()) {
+      throw new ExceptionList(DiaryErrorCode.DIARY_NOT_SHARED);
+    }
   }
 }
