@@ -24,4 +24,6 @@ public interface DiaryRepository extends Repository<Diary, Long> {
     List<Diary> findAllByUser_UserIdAndDiaryDateAndIsSharedTrue(Long userId, LocalDate date);
 
     Optional<Diary> findTopByUser_UserIdAndDiaryDateOrderByCreatedAtDesc(Long userId, LocalDate date);
+
+    Optional<Diary> findById(Long diaryId);
 }
