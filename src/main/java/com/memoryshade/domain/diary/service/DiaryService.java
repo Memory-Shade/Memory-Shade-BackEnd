@@ -3,6 +3,7 @@ package com.memoryshade.domain.diary.service;
 import com.memoryshade.domain.diary.dto.DiaryCreateFromChatResponseDto;
 import com.memoryshade.domain.diary.dto.DiaryReadResponseDto;
 import com.memoryshade.domain.diary.dto.DiaryUpdateShareResponseDto;
+import com.memoryshade.domain.diary.exception.DiaryErrorCode;
 import com.memoryshade.domain.diary.model.Diary;
 import com.memoryshade.domain.diary.repository.DiaryRepository;
 import com.memoryshade.domain.guardianLink.exception.GuardianLinkErrorCode;
@@ -39,6 +40,24 @@ public class DiaryService {
                 .toList();
     }
 
+    public List<DiaryReadResponseDto> getAllDiariesByDateRange(
+            Long loginUserId,
+            LocalDate startDate,
+            LocalDate endDate
+    ) {
+        userRepository.getByUserId(loginUserId);
+        validateDateRange(startDate, endDate);
+
+        return diaryRepository.findAllByUser_UserIdAndDiaryDateBetweenOrderByDiaryDateAsc(
+                        loginUserId,
+                        startDate,
+                        endDate
+                )
+                .stream()
+                .map(DiaryReadResponseDto::fromDiary)
+                .toList();
+    }
+
     public List<DiaryReadResponseDto> getUserSharedDiariesByDate(
             Long loginGuardianId,
             Long userId,
@@ -64,6 +83,47 @@ public class DiaryService {
                 .stream()
                 .map(DiaryReadResponseDto::fromDiary)
                 .toList();
+    }
+
+    public List<DiaryReadResponseDto> getUserSharedDiariesByDateRange(
+            Long loginGuardianId,
+            Long userId,
+            LocalDate startDate,
+            LocalDate endDate
+    ) {
+        if (loginGuardianId == null) {
+            throw new ExceptionList(GuardianLinkErrorCode.UNAUTHORIZED_GUARDIAN);
+        }
+
+        validateDateRange(startDate, endDate);
+
+        User guardian = userRepository.getByUserId(loginGuardianId);
+        if (guardian.getRole() != Role.GUARDIAN) {
+            throw new ExceptionList(GuardianLinkErrorCode.GUARDIAN_ONLY);
+        }
+
+        User user = userRepository.getByUserId(userId);
+        if (user.getRole() != Role.USER) {
+            throw new ExceptionList(GuardianLinkErrorCode.TARGET_USER_ONLY);
+        }
+
+        guardianLinkRepository.validateLinked(userId, loginGuardianId);
+
+        return diaryRepository.findAllByUser_UserIdAndDiaryDateBetweenAndIsSharedTrueOrderByDiaryDateAsc(
+                        userId,
+                        startDate,
+                        endDate
+                )
+                .stream()
+                .map(DiaryReadResponseDto::fromDiary)
+                .toList();
+    }
+
+
+    private void validateDateRange(LocalDate startDate, LocalDate endDate) {
+        if (startDate.isAfter(endDate)) {
+            throw new ExceptionList(DiaryErrorCode.INVALID_DATE_RANGE);
+        }
     }
 
     @Transactional
@@ -108,3 +168,4 @@ public class DiaryService {
         return diaryRepository.findTopByUser_UserIdAndDiaryDateOrderByCreatedAtDesc(userId, date);
     }
 }
+
