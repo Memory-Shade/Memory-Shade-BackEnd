@@ -36,4 +36,7 @@ public interface DiaryRepository extends Repository<Diary, Long> {
     );
 
     Optional<Diary> findTopByUser_UserIdAndDiaryDateOrderByCreatedAtDesc(Long userId, LocalDate date);
+
+    Optional<Diary> findById(Long diaryId);
 }
+

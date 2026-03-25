@@ -2,6 +2,7 @@ package com.memoryshade.domain.chat.controller;
 
 import java.util.List;
 
+import com.memoryshade.domain.chat.dto.ChatMediaUploadResponseDto;
 import com.memoryshade.domain.chat.dto.ChatMessageResponseDto;
 import com.memoryshade.domain.chat.dto.ChatSessionCloseResponseDto;
 import com.memoryshade.domain.chat.dto.ChatSessionCreateResponseDto;
@@ -46,12 +47,28 @@ public class ChatController {
     );
   }
 
+  @PostMapping(
+      value = "/{sessionId}/media",
+      consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+  )
+  public ResponseEntity<ChatMediaUploadResponseDto> uploadChatMedia(
+      @AuthenticationPrincipal Long loginUserId,
+      @PathVariable Long sessionId,
+      @RequestPart("file") MultipartFile file
+  ) {
+    return ResponseEntity.ok(
+        chatService.uploadChatMedia(loginUserId, sessionId, file)
+    );
+  }
+
   @PostMapping("/{sessionId}/close")
   public ResponseEntity<ChatSessionCloseResponseDto> closeChatSession(
       @AuthenticationPrincipal Long loginUserId,
       @PathVariable Long sessionId
   ) {
-    return ResponseEntity.ok(chatService.closeChatSession(loginUserId, sessionId));
+    return ResponseEntity.ok(
+        chatService.closeChatSession(loginUserId, sessionId)
+    );
   }
 
   @GetMapping("/{sessionId}/messages")

@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -162,4 +163,9 @@ public class DiaryService {
 
         return DiaryCreateFromChatResponseDto.fromDiary(savedDiary);
     }
+
+    public Optional<Diary> findTopDiaryByUserIdAndDiaryDate(Long userId, LocalDate date) {
+        return diaryRepository.findTopByUser_UserIdAndDiaryDateOrderByCreatedAtDesc(userId, date);
+    }
 }
+
