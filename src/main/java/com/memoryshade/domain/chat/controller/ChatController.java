@@ -54,10 +54,10 @@ public class ChatController {
   public ResponseEntity<ChatMediaUploadResponseDto> uploadChatMedia(
       @AuthenticationPrincipal Long loginUserId,
       @PathVariable Long sessionId,
-      @RequestPart("file") MultipartFile file
+      @RequestPart("files") List<MultipartFile> files
   ) {
     return ResponseEntity.ok(
-        chatService.uploadChatMedia(loginUserId, sessionId, file)
+        chatService.uploadChatMedia(loginUserId, sessionId, files)
     );
   }
 

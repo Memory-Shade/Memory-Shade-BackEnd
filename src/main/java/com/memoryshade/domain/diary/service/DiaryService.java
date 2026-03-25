@@ -167,5 +167,6 @@ public class DiaryService {
     public Optional<Diary> findTopDiaryByUserIdAndDiaryDate(Long userId, LocalDate date) {
         return diaryRepository.findTopByUser_UserIdAndDiaryDateOrderByCreatedAtDesc(userId, date);
     }
-}
 
+
+}
