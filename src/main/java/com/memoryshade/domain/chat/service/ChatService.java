@@ -37,6 +37,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -140,31 +141,40 @@ public class ChatService {
   public ChatMediaUploadResponseDto uploadChatMedia(
       Long loginUserId,
       Long sessionId,
-      MultipartFile file
+      List<MultipartFile> files
   ) {
     if (loginUserId == null) {
       throw new ExceptionList(ChatErrorCode.UNAUTHORIZED_USER);
     }
 
-    if (file == null || file.isEmpty()) {
+    if (files == null || files.isEmpty()) {
       throw new ExceptionList(ChatErrorCode.EMPTY_IMAGE_FILE);
     }
 
     ChatSession session = getOwnedSession(loginUserId, sessionId);
 
-    String mediaUrl = fileStorageService.uploadImage(file);
+    List<String> mediaUrls = new ArrayList<>();
 
-    chatSessionMediaRepository.save(
-        ChatSessionMedia.builder()
-            .session(session)
-            .mediaUrl(mediaUrl)
-            .mediaType(MediaType.IMAGE)
-            .build()
-    );
+    for (MultipartFile file : files) {
+      if (file == null || file.isEmpty()) {
+        throw new ExceptionList(ChatErrorCode.EMPTY_IMAGE_FILE);
+      }
 
-    return new ChatMediaUploadResponseDto(mediaUrl);
+      String mediaUrl = fileStorageService.uploadImage(file);
+
+      chatSessionMediaRepository.save(
+          ChatSessionMedia.builder()
+              .session(session)
+              .mediaUrl(mediaUrl)
+              .mediaType(MediaType.IMAGE)
+              .build()
+      );
+
+      mediaUrls.add(mediaUrl);
+    }
+
+    return new ChatMediaUploadResponseDto(mediaUrls);
   }
-
   @Transactional
   public ChatSessionCloseResponseDto closeChatSession(
       Long loginUserId,
