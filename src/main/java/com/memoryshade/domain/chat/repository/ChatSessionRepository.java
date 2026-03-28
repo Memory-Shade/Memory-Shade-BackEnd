@@ -9,5 +9,5 @@ import org.springframework.data.repository.Repository;
 public interface ChatSessionRepository extends Repository<ChatSession, Long> {
   ChatSession save(ChatSession chatSession);
   Optional<ChatSession> findById(Long sessionId);
-  Optional<ChatSession> findByUser_UserIdAndSessionDate(Long userId, LocalDate sessionDate);
+  Optional<ChatSession> findByUser_UserIdAndSessionDateAndIsActiveTrue(Long userId, LocalDate sessionDate);
 }

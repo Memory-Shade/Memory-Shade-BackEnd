@@ -27,13 +27,22 @@ public class ChatSession {
     @Column(name = "session_date", nullable = false)
     private LocalDate sessionDate;
 
+    @Column(name = "is_active", nullable = false)
+    private boolean isActive;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
 
     @Builder
     public ChatSession(User user, LocalDate sessionDate) {
         this.user = user;
         this.sessionDate = sessionDate;
+        this.isActive = true;
         this.createdAt = LocalDateTime.now();
+    }
+
+    public void close(){
+        this.isActive = false;
     }
 }
