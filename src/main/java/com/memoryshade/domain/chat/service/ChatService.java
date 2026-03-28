@@ -68,7 +68,8 @@ public class ChatService {
     User user = userRepository.getByUserId(loginUserId);
     LocalDate today = LocalDate.now();
 
-    ChatSession session = sessionRepository.findByUser_UserIdAndSessionDate(loginUserId, today)
+    ChatSession session = sessionRepository
+        .findByUser_UserIdAndSessionDateAndIsActiveTrue(loginUserId, today)
         .orElseGet(() -> sessionRepository.save(
             ChatSession.builder()
                 .user(user)
@@ -118,7 +119,7 @@ public class ChatService {
       throw new ExceptionList(ChatErrorCode.EMPTY_AUDIO_FILE);
     }
 
-    ChatSession session = getOwnedSession(loginUserId, sessionId);
+    ChatSession session = getOwnedActiveSession(loginUserId, sessionId);
 
     String userText = transcribe(file);
 
@@ -151,7 +152,7 @@ public class ChatService {
       throw new ExceptionList(ChatErrorCode.EMPTY_IMAGE_FILE);
     }
 
-    ChatSession session = getOwnedSession(loginUserId, sessionId);
+    ChatSession session = getOwnedActiveSession(loginUserId, sessionId);
 
     List<String> mediaUrls = new ArrayList<>();
 
@@ -175,6 +176,7 @@ public class ChatService {
 
     return new ChatMediaUploadResponseDto(mediaUrls);
   }
+
   @Transactional
   public ChatSessionCloseResponseDto closeChatSession(
       Long loginUserId,
@@ -184,7 +186,7 @@ public class ChatService {
       throw new ExceptionList(ChatErrorCode.UNAUTHORIZED_USER);
     }
 
-    ChatSession session = getOwnedSession(loginUserId, sessionId);
+    ChatSession session = getOwnedActiveSession(loginUserId, sessionId);
 
     List<ChatMessage> messages =
         messageRepository.findAllBySession_SessionIdOrderByCreatedAtAsc(session.getSessionId());
@@ -215,6 +217,8 @@ public class ChatService {
 
     emotionService.createEmotionAnalysis(loginUserId, diaryResponse.diaryId());
 
+    session.close();
+
     return new ChatSessionCloseResponseDto(
         diaryResponse.diaryId(),
         diaryResponse.diaryDate(),
@@ -228,7 +232,7 @@ public class ChatService {
       throw new ExceptionList(ChatErrorCode.UNAUTHORIZED_USER);
     }
 
-    ChatSession session = getOwnedSession(loginUserId, sessionId);
+    ChatSession session = getOwnedActiveSession(loginUserId, sessionId);
 
     return messageRepository.findAllBySession_SessionIdOrderByCreatedAtAsc(session.getSessionId())
         .stream()
@@ -248,6 +252,17 @@ public class ChatService {
 
     return session;
   }
+
+  private ChatSession getOwnedActiveSession(Long loginUserId, Long sessionId) {
+    ChatSession session = getOwnedSession(loginUserId, sessionId);
+
+    if (!session.isActive()) {
+      throw new ExceptionList(ChatErrorCode.CHAT_SESSION_CLOSED);
+    }
+
+    return session;
+  }
+
 
   private String getYesterdayDiarySummary(Long userId) {
     LocalDate yesterday = LocalDate.now().minusDays(1);
