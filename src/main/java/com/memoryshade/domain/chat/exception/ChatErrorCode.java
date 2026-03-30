@@ -16,7 +16,8 @@ public enum ChatErrorCode implements ErrorCode {
   EMPTY_AUDIO_FILE(HttpStatus.BAD_REQUEST, "음성 파일이 비어 있습니다"),
   STT_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "음성 변환에 실패했습니다"),
   AI_RESPONSE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "AI 응답 생성에 실패했습니다"),
-  EMPTY_IMAGE_FILE(HttpStatus.BAD_REQUEST, "이미지 파일이 비어 있습니다");
+  EMPTY_IMAGE_FILE(HttpStatus.BAD_REQUEST, "이미지 파일이 비어 있습니다"),
+  TEXT_MESSAGE_EMPTY(HttpStatus.BAD_REQUEST, "텍스트 메시지가 비어 있습니다");
 
   private final HttpStatus httpStatus;
   private final String message;
