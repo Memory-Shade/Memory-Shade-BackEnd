@@ -4,8 +4,10 @@ import java.util.List;
 
 import com.memoryshade.domain.chat.dto.ChatMediaUploadResponseDto;
 import com.memoryshade.domain.chat.dto.ChatMessageResponseDto;
+import com.memoryshade.domain.chat.dto.ChatMessagesReadResponseDto;
 import com.memoryshade.domain.chat.dto.ChatSessionCloseResponseDto;
 import com.memoryshade.domain.chat.dto.ChatSessionCreateResponseDto;
+import com.memoryshade.domain.chat.dto.ChatTextRequestDto;
 import com.memoryshade.domain.chat.dto.ChatVoiceResponseDto;
 import com.memoryshade.domain.chat.service.ChatService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -47,6 +49,17 @@ public class ChatController {
     );
   }
 
+  @PostMapping("/{sessionId}/messages/text")
+  public ResponseEntity<ChatVoiceResponseDto> createTextChatMessage(
+      @AuthenticationPrincipal Long loginUserId,
+      @PathVariable Long sessionId,
+      @RequestBody ChatTextRequestDto request
+  ) {
+    return ResponseEntity.ok(
+        chatService.createTextChatMessage(loginUserId, sessionId, request)
+    );
+  }
+
   @PostMapping(
       value = "/{sessionId}/media",
       consumes = MediaType.MULTIPART_FORM_DATA_VALUE
@@ -72,7 +85,7 @@ public class ChatController {
   }
 
   @GetMapping("/{sessionId}/messages")
-  public ResponseEntity<List<ChatMessageResponseDto>> getChatMessages(
+  public ResponseEntity<ChatMessagesReadResponseDto> getChatMessages(
       @AuthenticationPrincipal Long loginUserId,
       @PathVariable Long sessionId
   ) {
