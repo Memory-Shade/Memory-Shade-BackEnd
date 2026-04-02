@@ -67,24 +67,29 @@ public class EmotionService {
 
   @Transactional(readOnly = true)
   public EmotionRecentReadResponseDto getRecentEmotionSummary(
-      Long loginGuardianId,
+      Long loginUserId,
       Long userId
   ) {
-    if (loginGuardianId == null) {
+    if (loginUserId == null) {
       throw new ExceptionList(GuardianLinkErrorCode.UNAUTHORIZED_GUARDIAN);
     }
 
-    User guardian = userRepository.getByUserId(loginGuardianId);
-    if (guardian.getRole() != Role.GUARDIAN) {
-      throw new ExceptionList(GuardianLinkErrorCode.GUARDIAN_ONLY);
-    }
-
+    User loginUser = userRepository.getByUserId(loginUserId);
     User targetUser = userRepository.getByUserId(userId);
+
     if (targetUser.getRole() != Role.USER) {
       throw new ExceptionList(GuardianLinkErrorCode.TARGET_USER_ONLY);
     }
 
-    guardianLinkRepository.validateLinked(userId, loginGuardianId);
+    if (loginUser.getRole() == Role.USER) {
+      if (!loginUser.getUserId().equals(userId)) {
+        throw new ExceptionList(GuardianLinkErrorCode.TARGET_USER_ONLY);
+      }
+    } else if (loginUser.getRole() == Role.GUARDIAN) {
+      guardianLinkRepository.validateLinked(userId, loginUserId);
+    } else {
+      throw new ExceptionList(GuardianLinkErrorCode.UNAUTHORIZED_GUARDIAN);
+    }
 
     LocalDate endDate = LocalDate.now();
     LocalDate startDate = endDate.minusDays(29);
