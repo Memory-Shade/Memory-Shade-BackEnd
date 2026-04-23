@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import com.memoryshade.domain.chat.model.ChatMessage;
+import com.memoryshade.domain.chat.model.ChatMessageType;
 import com.memoryshade.domain.chat.model.SenderType;
 
 import java.time.LocalDateTime;
@@ -16,18 +17,26 @@ public record ChatMessageResponseDto(
     @JsonProperty("sender_type")
     SenderType senderType,
 
+    @JsonProperty("message_type")
+    ChatMessageType messageType,
+
     @JsonProperty("content")
     String content,
+
+    @JsonProperty("reference_media_url")
+    String referenceMediaUrl,
 
     @JsonProperty("created_at")
     LocalDateTime createdAt
 ) {
-  public static ChatMessageResponseDto from(ChatMessage message) {
+  public static ChatMessageResponseDto from(ChatMessage chatMessage) {
     return new ChatMessageResponseDto(
-        message.getMessageId(),
-        message.getSenderType(),
-        message.getContent(),
-        message.getCreatedAt()
+        chatMessage.getMessageId(),
+        chatMessage.getSenderType(),
+        chatMessage.getMessageType(),
+        chatMessage.getContent(),
+        chatMessage.getReferenceMediaUrl(),
+        chatMessage.getCreatedAt()
     );
   }
 }

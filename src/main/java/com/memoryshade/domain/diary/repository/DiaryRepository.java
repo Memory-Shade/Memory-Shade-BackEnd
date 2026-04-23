@@ -35,8 +35,13 @@ public interface DiaryRepository extends Repository<Diary, Long> {
             LocalDate endDate
     );
 
+    List<Diary> findAllByUser_UserIdAndDiaryDateBetweenOrderByDiaryDateDesc(
+        Long userId,
+        LocalDate startDate,
+        LocalDate endDate
+    );
+
     Optional<Diary> findTopByUser_UserIdAndDiaryDateOrderByCreatedAtDesc(Long userId, LocalDate date);
 
     Optional<Diary> findById(Long diaryId);
 }
-

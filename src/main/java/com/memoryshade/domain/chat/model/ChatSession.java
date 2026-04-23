@@ -30,19 +30,33 @@ public class ChatSession {
     @Column(name = "is_active", nullable = false)
     private boolean isActive;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "conversation_stage", nullable = false)
+    private ConversationStage conversationStage;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-
     @Builder
-    public ChatSession(User user, LocalDate sessionDate) {
+    public ChatSession(User user, LocalDate sessionDate, ConversationStage conversationStage) {
         this.user = user;
         this.sessionDate = sessionDate;
         this.isActive = true;
+        this.conversationStage = conversationStage == null
+            ? ConversationStage.DAILY_RECORD
+            : conversationStage;
         this.createdAt = LocalDateTime.now();
     }
 
-    public void close(){
+    public void close() {
         this.isActive = false;
+    }
+
+    public void changeToRecallQuizStage() {
+        this.conversationStage = ConversationStage.RECALL_QUIZ;
+    }
+
+    public void changeToDailyRecordStage() {
+        this.conversationStage = ConversationStage.DAILY_RECORD;
     }
 }
