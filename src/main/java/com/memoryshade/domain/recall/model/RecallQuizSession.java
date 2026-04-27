@@ -1,12 +1,13 @@
 package com.memoryshade.domain.recall.model;
 
-import com.memoryshade.domain.chat.model.ChatSession;
+import com.memoryshade.domain.user.model.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -19,9 +20,12 @@ public class RecallQuizSession {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long recallQuizSessionId;
 
-  @OneToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "session_id", nullable = false, unique = true)
-  private ChatSession session;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "user_id", nullable = false)
+  private User user;
+
+  @Column(name = "quiz_date", nullable = false)
+  private LocalDate quizDate;
 
   @Column(name = "total_question_count", nullable = false)
   private int totalQuestionCount;
@@ -31,9 +35,6 @@ public class RecallQuizSession {
 
   @Column(name = "partial_count", nullable = false)
   private int partialCount;
-
-  @Column(name = "score", nullable = false)
-  private int score;
 
   @Column(name = "is_completed", nullable = false)
   private boolean isCompleted;
@@ -45,29 +46,38 @@ public class RecallQuizSession {
   private LocalDateTime completedAt;
 
   @Builder
-  public RecallQuizSession(ChatSession session, int totalQuestionCount) {
-    this.session = session;
+  public RecallQuizSession(User user, LocalDate quizDate, int totalQuestionCount) {
+    this.user = user;
+    this.quizDate = quizDate;
     this.totalQuestionCount = totalQuestionCount;
     this.correctCount = 0;
     this.partialCount = 0;
-    this.score = 0;
     this.isCompleted = false;
     this.createdAt = LocalDateTime.now();
   }
 
   public void applyJudgement(RecallQuizJudgement judgement) {
     if (judgement == RecallQuizJudgement.CORRECT) {
-      this.correctCount += 1;
-    } else if (judgement == RecallQuizJudgement.PARTIAL) {
-      this.partialCount += 1;
+      this.correctCount++;
+      return;
     }
 
-    int rawScore = (this.correctCount * 100) + (this.partialCount * 50);
-    this.score = this.totalQuestionCount == 0 ? 0 : rawScore / this.totalQuestionCount;
+    if (judgement == RecallQuizJudgement.PARTIAL) {
+      this.partialCount++;
+    }
   }
 
   public void complete() {
     this.isCompleted = true;
     this.completedAt = LocalDateTime.now();
+  }
+
+  public double calculateScorePercent() {
+    if (totalQuestionCount == 0) {
+      return 0.0;
+    }
+
+    double earnedScore = correctCount + (partialCount * 0.5);
+    return (earnedScore * 100.0) / totalQuestionCount;
   }
 }

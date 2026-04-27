@@ -18,8 +18,8 @@ public class RecallQuizAnswer {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long recallQuizAnswerId;
 
-  @OneToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "recall_quiz_question_id", nullable = false, unique = true)
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "recall_quiz_question_id", nullable = false)
   private RecallQuizQuestion recallQuizQuestion;
 
   @Column(name = "user_answer", nullable = false, columnDefinition = "TEXT")
@@ -32,8 +32,8 @@ public class RecallQuizAnswer {
   @Column(name = "evaluation_reason", columnDefinition = "TEXT")
   private String evaluationReason;
 
-  @Column(name = "answered_at", nullable = false, updatable = false)
-  private LocalDateTime answeredAt;
+  @Column(name = "created_at", nullable = false, updatable = false)
+  private LocalDateTime createdAt;
 
   @Builder
   public RecallQuizAnswer(
@@ -46,6 +46,6 @@ public class RecallQuizAnswer {
     this.userAnswer = userAnswer;
     this.judgement = judgement;
     this.evaluationReason = evaluationReason;
-    this.answeredAt = LocalDateTime.now();
+    this.createdAt = LocalDateTime.now();
   }
 }

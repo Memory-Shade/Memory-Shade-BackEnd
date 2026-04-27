@@ -8,6 +8,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "recall_quiz_questions")
 @Getter
@@ -39,6 +41,12 @@ public class RecallQuizQuestion {
   @JoinColumn(name = "source_diary_media_id")
   private DiaryMedia sourceDiaryMedia;
 
+  @Column(name = "created_at", nullable = false, updatable = false)
+  private LocalDateTime createdAt;
+
+  @Column(name = "asked_at")
+  private LocalDateTime askedAt;
+
   @Builder
   public RecallQuizQuestion(
       RecallQuizSession recallQuizSession,
@@ -54,9 +62,20 @@ public class RecallQuizQuestion {
     this.expectedAnswer = expectedAnswer;
     this.sourceDiary = sourceDiary;
     this.sourceDiaryMedia = sourceDiaryMedia;
+    this.createdAt = LocalDateTime.now();
+  }
+
+  public void markAsked() {
+    if (this.askedAt == null) {
+      this.askedAt = LocalDateTime.now();
+    }
   }
 
   public String getReferenceMediaUrl() {
     return sourceDiaryMedia == null ? null : sourceDiaryMedia.getMediaUrl();
+  }
+
+  public boolean isAsked() {
+    return askedAt != null;
   }
 }
