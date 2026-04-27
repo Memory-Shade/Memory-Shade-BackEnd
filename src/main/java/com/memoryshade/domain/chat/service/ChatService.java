@@ -34,25 +34,35 @@ public class ChatService {
 
   private static final String DEFAULT_INITIAL_QUESTION = "안녕하세요. 오늘은 어떤 하루를 보내셨나요?";
 
-  // AI 프롬프트
   private static final String INITIAL_QUESTION_SYSTEM_PROMPT = """
-            당신은 경증 치매 어르신의 하루 기록을 도와주는 AI입니다.
-            짧고 부드럽게 말하세요. 한 번에 질문은 하나만 하세요.
-            항상 공감부터 하고, 자연스럽게 회상을 유도하세요.
-            전날 기록을 참고해서 오늘 대화를 시작하는 첫 질문을 한 문장으로 생성하세요.
-            """;
+          당신은 경증 치매 어르신의 하루 기록을 도와주는 AI입니다.
+          짧고 부드럽게 말하세요. 한 번에 질문은 하나만 하세요.
+          감정보다 구체적인 사실 회상을 우선하세요.
+          식사, 장소, 함께한 사람, 이동, 활동, 본 것, 먹은 것처럼 실제로 있었던 일을 묻는 질문을 하세요.
+          감정 질문은 필요할 때만 자연스럽게 덧붙이세요.
+          전날 기록을 참고해서 오늘 대화를 시작하는 첫 질문을 한 문장으로 생성하세요.
+          예: 오늘 점심에는 어떤 반찬을 드셨나요?
+          예: 오늘은 누구와 함께 시간을 보내셨나요?
+          예: 오늘 밖에 나가셨다면 어디에 다녀오셨나요?
+          """;
 
   private static final String CHAT_SYSTEM_PROMPT = """
-            당신은 경증 치매 어르신의 하루 기록을 도와주는 AI입니다.
-            짧고 부드럽게 말하고, 한 번에 질문은 하나만 하세요.
-            항상 공감 후 질문하세요.
-            """;
+          당신은 경증 치매 어르신의 하루 기록을 도와주는 AI입니다.
+          짧고 부드럽게 말하고, 한 번에 질문은 하나만 하세요.
+          대화의 목적은 감정 상담보다 하루에 실제로 있었던 일을 구체적으로 기록하는 것입니다.
+          우선 식사, 반찬, 장소, 시간대, 함께한 사람, 이동, 활동, 본 것, 들은 것, 산 것 등을 물어보세요.
+          감정은 중요하지만 매번 묻지 말고, 사용자가 사건을 말한 뒤 자연스럽게 한 번만 확인하세요.
+          질문은 “기분이 어떠셨어요?”보다 “무엇을 드셨어요?”, “어디에 다녀오셨어요?”, “누구와 함께하셨어요?”처럼 사실 중심으로 하세요.
+          """;
 
   private static final String SUMMARY_SYSTEM_PROMPT = """
             당신은 경증 치매 어르신의 하루 대화를 요약하는 AI입니다.
             사용자의 하루를 중심으로 핵심 사건, 감정, 활동을 2~3문장으로 간단히 요약하세요.
             불필요한 설명 없이 일기 저장용 요약만 작성하세요.
             """;
+
+  private static final String PHOTO_DESCRIPTION_REQUEST_MESSAGE =
+      "사진을 올려주셨네요. 이 사진이 언제, 어디에서 찍은 사진인지 설명해 주실 수 있을까요?";
 
   private final ChatSessionRepository sessionRepository;
   private final ChatSessionMediaRepository chatSessionMediaRepository;
@@ -138,8 +148,11 @@ public class ChatService {
 
     if (mediaUrls.isEmpty()) throw new ExceptionList(ChatErrorCode.EMPTY_IMAGE_FILE);
 
+    saveMessage(session, SenderType.AI, PHOTO_DESCRIPTION_REQUEST_MESSAGE);
+
     return new ChatMediaUploadResponseDto(mediaUrls);
   }
+
 
   @Transactional
   public ChatSessionCloseResponseDto closeChatSession(Long loginUserId, Long sessionId) {
