@@ -2,6 +2,7 @@ package com.memoryshade.domain.diary.service;
 
 import com.memoryshade.domain.diary.dto.DiaryCreateFromChatResponseDto;
 import com.memoryshade.domain.diary.dto.DiaryReadResponseDto;
+import com.memoryshade.domain.diary.dto.DiaryStreakResponseDto;
 import com.memoryshade.domain.diary.dto.DiaryUpdateShareResponseDto;
 import com.memoryshade.domain.diary.exception.DiaryErrorCode;
 import com.memoryshade.domain.diary.model.Diary;
@@ -56,6 +57,20 @@ public class DiaryService {
                 .stream()
                 .map(DiaryReadResponseDto::fromDiary)
                 .toList();
+    }
+
+    public DiaryStreakResponseDto getMyDiaryStreak(Long loginUserId) {
+        userRepository.getByUserId(loginUserId);
+
+        LocalDate today = LocalDate.now();
+        List<LocalDate> diaryDates = diaryRepository.findDistinctDiaryDatesByUserIdUpTo(
+                loginUserId,
+                today
+        );
+        int streakDays = calculateCurrentStreakDays(diaryDates, today);
+        LocalDate lastDiaryDate = diaryDates.isEmpty() ? null : diaryDates.get(0);
+
+        return new DiaryStreakResponseDto(streakDays, today, lastDiaryDate);
     }
 
     public List<DiaryReadResponseDto> getUserSharedDiariesByDate(
@@ -126,6 +141,33 @@ public class DiaryService {
         }
     }
 
+    private int calculateCurrentStreakDays(List<LocalDate> diaryDates, LocalDate today) {
+        if (diaryDates.isEmpty()) {
+            return 0;
+        }
+
+        LocalDate latestDiaryDate = diaryDates.get(0);
+        LocalDate expectedDate = latestDiaryDate.isEqual(today) ? today : today.minusDays(1);
+        if (latestDiaryDate.isBefore(expectedDate)) {
+            return 0;
+        }
+
+        int streakDays = 0;
+        for (LocalDate diaryDate : diaryDates) {
+            if (diaryDate.isEqual(expectedDate)) {
+                ++streakDays;
+                expectedDate = expectedDate.minusDays(1);
+                continue;
+            }
+
+            if (diaryDate.isBefore(expectedDate)) {
+                break;
+            }
+        }
+
+        return streakDays;
+    }
+
     @Transactional
     public DiaryUpdateShareResponseDto updateDiaryShare(Long loginUserId, Long diaryId) {
         User user = userRepository.getByUserId(loginUserId);
@@ -167,6 +209,4 @@ public class DiaryService {
     public Optional<Diary> findTopDiaryByUserIdAndDiaryDate(Long userId, LocalDate date) {
         return diaryRepository.findTopByUser_UserIdAndDiaryDateOrderByCreatedAtDesc(userId, date);
     }
-
-
 }

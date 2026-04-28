@@ -3,7 +3,9 @@ package com.memoryshade.domain.diary.repository;
 import com.memoryshade.domain.diary.exception.DiaryErrorCode;
 import com.memoryshade.domain.diary.model.Diary;
 import com.memoryshade.global.exception.ExceptionList;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.Repository;
+import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -39,6 +41,18 @@ public interface DiaryRepository extends Repository<Diary, Long> {
         Long userId,
         LocalDate startDate,
         LocalDate endDate
+    );
+
+    @Query("""
+            select distinct d.diaryDate
+            from Diary d
+            where d.user.userId = :userId
+              and d.diaryDate <= :endDate
+            order by d.diaryDate desc
+            """)
+    List<LocalDate> findDistinctDiaryDatesByUserIdUpTo(
+            @Param("userId") Long userId,
+            @Param("endDate") LocalDate endDate
     );
 
     Optional<Diary> findTopByUser_UserIdAndDiaryDateOrderByCreatedAtDesc(Long userId, LocalDate date);

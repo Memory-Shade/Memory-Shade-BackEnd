@@ -2,6 +2,7 @@ package com.memoryshade.domain.diary.controller;
 
 import com.memoryshade.domain.diary.dto.DiaryMediaReadResponseDto;
 import com.memoryshade.domain.diary.dto.DiaryReadResponseDto;
+import com.memoryshade.domain.diary.dto.DiaryStreakResponseDto;
 import com.memoryshade.domain.diary.dto.DiaryUpdateShareRequestDto;
 import com.memoryshade.domain.diary.dto.DiaryUpdateShareResponseDto;
 import com.memoryshade.domain.diary.service.DiaryMediaService;
@@ -41,6 +42,13 @@ public class DiaryController {
         return ResponseEntity.ok(
                 diaryService.getAllDiariesByDateRange(loginUserId, startDate, endDate)
         );
+    }
+
+    @GetMapping("/diaries/me/streak")
+    public ResponseEntity<DiaryStreakResponseDto> getMyDiaryStreak(
+            @AuthenticationPrincipal Long loginUserId
+    ) {
+        return ResponseEntity.ok(diaryService.getMyDiaryStreak(loginUserId));
     }
 
     @GetMapping("/users/{userId}/diaries")
