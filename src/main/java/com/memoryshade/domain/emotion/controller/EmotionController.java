@@ -1,5 +1,6 @@
 package com.memoryshade.domain.emotion.controller;
 
+import com.memoryshade.domain.emotion.dto.EmotionMonthlyAverageComparisonResponseDto;
 import com.memoryshade.domain.emotion.dto.EmotionRecentReadResponseDto;
 import com.memoryshade.domain.emotion.service.EmotionService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -34,6 +35,16 @@ public class EmotionController {
   ) {
     return ResponseEntity.ok(
         emotionService.getRecentEmotionSummary(loginUserId, userId)
+    );
+  }
+
+  @GetMapping("/monthly-averages/comparison")
+  public ResponseEntity<EmotionMonthlyAverageComparisonResponseDto> getMonthlyEmotionAverageComparison(
+      @AuthenticationPrincipal Long loginUserId,
+      @RequestParam("user_id") Long userId
+  ) {
+    return ResponseEntity.ok(
+        emotionService.getMonthlyEmotionAverageComparison(loginUserId, userId)
     );
   }
 }

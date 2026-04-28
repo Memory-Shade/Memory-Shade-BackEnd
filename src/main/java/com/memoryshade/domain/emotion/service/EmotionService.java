@@ -2,6 +2,9 @@ package com.memoryshade.domain.emotion.service;
 
 import com.memoryshade.domain.diary.model.Diary;
 import com.memoryshade.domain.diary.repository.DiaryRepository;
+import com.memoryshade.domain.emotion.dto.EmotionAverageScoresDto;
+import com.memoryshade.domain.emotion.dto.EmotionMonthlyAverageComparisonResponseDto;
+import com.memoryshade.domain.emotion.dto.EmotionMonthlyAverageResponseDto;
 import com.memoryshade.domain.emotion.dto.EmotionRecentItemResponseDto;
 import com.memoryshade.domain.emotion.dto.EmotionRecentReadResponseDto;
 import com.memoryshade.domain.emotion.dto.EmotionResponseDto;
@@ -22,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -70,26 +74,7 @@ public class EmotionService {
       Long loginUserId,
       Long userId
   ) {
-    if (loginUserId == null) {
-      throw new ExceptionList(GuardianLinkErrorCode.UNAUTHORIZED_GUARDIAN);
-    }
-
-    User loginUser = userRepository.getByUserId(loginUserId);
-    User targetUser = userRepository.getByUserId(userId);
-
-    if (targetUser.getRole() != Role.USER) {
-      throw new ExceptionList(GuardianLinkErrorCode.TARGET_USER_ONLY);
-    }
-
-    if (loginUser.getRole() == Role.USER) {
-      if (!loginUser.getUserId().equals(userId)) {
-        throw new ExceptionList(GuardianLinkErrorCode.TARGET_USER_ONLY);
-      }
-    } else if (loginUser.getRole() == Role.GUARDIAN) {
-      guardianLinkRepository.validateLinked(userId, loginUserId);
-    } else {
-      throw new ExceptionList(GuardianLinkErrorCode.UNAUTHORIZED_GUARDIAN);
-    }
+    validateEmotionReadableTarget(loginUserId, userId);
 
     LocalDate endDate = LocalDate.now();
     LocalDate startDate = endDate.minusDays(29);
@@ -149,6 +134,113 @@ public class EmotionService {
         .toList();
 
     return new EmotionRecentReadResponseDto(topEmotions);
+  }
+
+  @Transactional(readOnly = true)
+  public EmotionMonthlyAverageComparisonResponseDto getMonthlyEmotionAverageComparison(
+      Long loginUserId,
+      Long userId
+  ) {
+    validateEmotionReadableTarget(loginUserId, userId);
+
+    LocalDate today = LocalDate.now();
+    YearMonth currentMonth = YearMonth.from(today);
+    YearMonth previousMonth = currentMonth.minusMonths(1);
+
+    EmotionMonthlyAverageResponseDto current = getMonthlyAverage(
+        userId,
+        currentMonth,
+        currentMonth.atDay(1),
+        today
+    );
+    EmotionMonthlyAverageResponseDto previous = getMonthlyAverage(
+        userId,
+        previousMonth,
+        previousMonth.atDay(1),
+        previousMonth.atEndOfMonth()
+    );
+
+    return new EmotionMonthlyAverageComparisonResponseDto(current, previous);
+  }
+
+  private EmotionMonthlyAverageResponseDto getMonthlyAverage(
+      Long userId,
+      YearMonth yearMonth,
+      LocalDate startDate,
+      LocalDate endDate
+  ) {
+    List<EmotionAnalysis> analyses =
+        emotionAnalysisRepository.findAllByDiary_User_UserIdAndDiary_DiaryDateBetween(
+            userId,
+            startDate,
+            endDate
+        );
+
+    int count = analyses.size();
+    if (count == 0) {
+      return new EmotionMonthlyAverageResponseDto(
+          yearMonth.toString(),
+          startDate,
+          endDate,
+          0,
+          false,
+          EmotionAverageScoresDto.zero()
+      );
+    }
+
+    EmotionAverageScoresDto averages = new EmotionAverageScoresDto(
+        average(analyses.stream().mapToInt(a -> nullToZero(a.getJoyScore())).sum(), count),
+        average(analyses.stream().mapToInt(a -> nullToZero(a.getSadnessScore())).sum(), count),
+        average(analyses.stream().mapToInt(a -> nullToZero(a.getAngerScore())).sum(), count),
+        average(analyses.stream().mapToInt(a -> nullToZero(a.getAnxietyScore())).sum(), count),
+        average(analyses.stream().mapToInt(a -> nullToZero(a.getEmbarrassmentScore())).sum(), count),
+        average(analyses.stream().mapToInt(a -> nullToZero(a.getHurtScore())).sum(), count),
+        average(analyses.stream().mapToInt(a -> nullToZero(a.getNeutralScore())).sum(), count)
+    );
+
+    return new EmotionMonthlyAverageResponseDto(
+        yearMonth.toString(),
+        startDate,
+        endDate,
+        count,
+        true,
+        averages
+    );
+  }
+
+  private void validateEmotionReadableTarget(Long loginUserId, Long userId) {
+    if (loginUserId == null) {
+      throw new ExceptionList(GuardianLinkErrorCode.UNAUTHORIZED_GUARDIAN);
+    }
+
+    User loginUser = userRepository.getByUserId(loginUserId);
+    User targetUser = userRepository.getByUserId(userId);
+
+    if (targetUser.getRole() != Role.USER) {
+      throw new ExceptionList(GuardianLinkErrorCode.TARGET_USER_ONLY);
+    }
+
+    if (loginUser.getRole() == Role.USER) {
+      if (!loginUser.getUserId().equals(userId)) {
+        throw new ExceptionList(GuardianLinkErrorCode.TARGET_USER_ONLY);
+      }
+      return;
+    }
+
+    if (loginUser.getRole() == Role.GUARDIAN) {
+      guardianLinkRepository.validateLinked(userId, loginUserId);
+      return;
+    }
+
+    throw new ExceptionList(GuardianLinkErrorCode.UNAUTHORIZED_GUARDIAN);
+  }
+
+  private int average(int sum, int count) {
+    return Math.round((float) sum / count);
+  }
+
+  private int nullToZero(Integer value) {
+    return value == null ? 0 : value;
   }
 
   private boolean isReliable(String topEmotion) {
