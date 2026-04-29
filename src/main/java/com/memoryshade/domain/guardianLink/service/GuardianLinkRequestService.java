@@ -64,7 +64,8 @@ public class GuardianLinkRequestService {
 
         notificationService.createGuardianLinkRequestNotification(
                 user.getUserId(),
-                guardian.getName()
+                guardian.getName(),
+                guardianLinkRequest.getRequestId()
         );
 
         return GuardianLinkRequestCreateResponseDto.fromGuardianLinkRequest(guardianLinkRequest);

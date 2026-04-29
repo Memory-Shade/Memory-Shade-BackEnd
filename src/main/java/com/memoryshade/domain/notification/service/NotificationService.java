@@ -25,6 +25,7 @@ public class NotificationService {
     private final NotificationRepository notificationRepository;
     private final UserRepository userRepository;
     private final GuardianLinkRepository guardianLinkRepository;
+    private final ExpoPushService expoPushService;
 
     @Transactional
     public NotificationResponseDto create(Long loginUserId, NotificationCreateRequestDto request) {
@@ -66,7 +67,7 @@ public class NotificationService {
     }
 
     @Transactional
-    public void createGuardianLinkRequestNotification(Long targetUserId, String guardianName) {
+    public void createGuardianLinkRequestNotification(Long targetUserId, String guardianName, Long requestId) {
         User user = userRepository.getByUserId(targetUserId);
 
         Notification notification = Notification.builder()
@@ -76,5 +77,6 @@ public class NotificationService {
                 .build();
 
         notificationRepository.save(notification);
+        expoPushService.sendGuardianLinkRequest(user.getFcmToken(), guardianName, requestId);
     }
 }
