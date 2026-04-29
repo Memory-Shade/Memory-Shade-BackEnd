@@ -50,6 +50,10 @@ public class User {
         this.lastLoggedAt = LocalDateTime.now();
     }
 
+    public void updateFcmToken(String fcmToken) {
+        this.fcmToken = fcmToken;
+    }
+
     public void clearFcmToken() {
         this.fcmToken = null;
     }
