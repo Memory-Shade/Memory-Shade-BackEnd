@@ -4,6 +4,7 @@ import com.memoryshade.domain.recall.model.RecallQuizSession;
 import org.springframework.data.repository.Repository;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 public interface RecallQuizSessionRepository extends Repository<RecallQuizSession, Long> {
@@ -13,4 +14,11 @@ public interface RecallQuizSessionRepository extends Repository<RecallQuizSessio
   Optional<RecallQuizSession> findById(Long recallQuizSessionId);
 
   Optional<RecallQuizSession> findByUser_UserIdAndQuizDateAndIsCompletedFalse(Long userId, LocalDate quizDate);
+
+  List<RecallQuizSession> findAllByUser_UserIdAndIsCompletedTrueAndQuizDateBetween(
+      Long userId,
+      LocalDate startDate,
+      LocalDate endDate
+  );
+
 }
