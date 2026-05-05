@@ -4,6 +4,8 @@ import com.memoryshade.domain.diary.model.Diary;
 import com.memoryshade.domain.diary.model.DiaryMedia;
 import com.memoryshade.domain.diary.repository.DiaryMediaRepository;
 import com.memoryshade.domain.diary.repository.DiaryRepository;
+import com.memoryshade.domain.guardianLink.exception.GuardianLinkErrorCode;
+import com.memoryshade.domain.guardianLink.repository.GuardianLinkRepository;
 import com.memoryshade.domain.recall.dto.RecallQuizMessageResponseDto;
 import com.memoryshade.domain.recall.dto.RecallQuizMessagesReadResponseDto;
 import com.memoryshade.domain.recall.dto.RecallQuizQuestionCreateDto;
@@ -11,6 +13,7 @@ import com.memoryshade.domain.recall.dto.RecallQuizResultResponseDto;
 import com.memoryshade.domain.recall.dto.RecallQuizSessionCreateResponseDto;
 import com.memoryshade.domain.recall.dto.RecallQuizTextRequestDto;
 import com.memoryshade.domain.recall.dto.RecallQuizTextResponseDto;
+import com.memoryshade.domain.recall.dto.RecallQuizWeeklyAverageComparisonResponseDto;
 import com.memoryshade.domain.recall.exception.RecallErrorCode;
 import com.memoryshade.domain.recall.model.RecallQuizAnswer;
 import com.memoryshade.domain.recall.model.RecallQuizJudgement;
@@ -19,6 +22,7 @@ import com.memoryshade.domain.recall.model.RecallQuizSession;
 import com.memoryshade.domain.recall.repository.RecallQuizAnswerRepository;
 import com.memoryshade.domain.recall.repository.RecallQuizQuestionRepository;
 import com.memoryshade.domain.recall.repository.RecallQuizSessionRepository;
+import com.memoryshade.domain.user.model.Role;
 import com.memoryshade.domain.user.model.User;
 import com.memoryshade.domain.user.repository.UserRepository;
 import com.memoryshade.global.exception.ExceptionList;
@@ -63,6 +67,7 @@ public class RecallQuizService {
   private final DiaryMediaRepository diaryMediaRepository;
   private final ChatClient chatClient;
   private final OpenAiAudioTranscriptionModel sttModel;
+  private final GuardianLinkRepository guardianLinkRepository;
 
   @Transactional
   public RecallQuizSessionCreateResponseDto createRecallQuizSession(Long loginUserId) {
@@ -551,5 +556,132 @@ public class RecallQuizService {
     }
 
     return "";
+  }
+
+
+  @Transactional(readOnly = true)
+  public RecallQuizWeeklyAverageComparisonResponseDto getWeeklyRecallQuizAverageComparison(
+      Long loginUserId,
+      Long userId
+  ) {
+    validateRecallDashboardReadableTarget(loginUserId, userId);
+
+    LocalDate today = LocalDate.now();
+
+    LocalDate thisWeekStartDate = today.minusDays(6);
+    LocalDate thisWeekEndDate = today;
+
+    LocalDate averageStartDate = today.minusDays(13);
+    LocalDate averageEndDate = today.minusDays(7);
+
+    List<RecallQuizSession> thisWeekSessions =
+        recallQuizSessionRepository.findAllByUser_UserIdAndIsCompletedTrueAndQuizDateBetween(
+            userId,
+            thisWeekStartDate,
+            thisWeekEndDate
+        );
+
+    List<RecallQuizSession> averageSessions =
+        recallQuizSessionRepository.findAllByUser_UserIdAndIsCompletedTrueAndQuizDateBetween(
+            userId,
+            averageStartDate,
+            averageEndDate
+        );
+
+    double thisWeekScore = calculateAverageScore(thisWeekSessions);
+    double averageScore = calculateAverageScore(averageSessions);
+
+    boolean hasThisWeekData = !thisWeekSessions.isEmpty();
+    boolean hasAverageData = !averageSessions.isEmpty();
+
+    double changeRate = calculateChangeRate(
+        thisWeekScore,
+        averageScore,
+        hasThisWeekData,
+        hasAverageData
+    );
+
+    return new RecallQuizWeeklyAverageComparisonResponseDto(
+        thisWeekScore,
+        averageScore,
+        changeRate,
+        hasThisWeekData,
+        buildRecallQuizDashboardDescription(changeRate, hasThisWeekData, hasAverageData)
+    );
+  }
+
+  private double calculateAverageScore(List<RecallQuizSession> sessions) {
+    if (sessions == null || sessions.isEmpty()) {
+      return 0.0;
+    }
+
+    return sessions.stream()
+        .mapToDouble(RecallQuizSession::calculateScorePercent)
+        .average()
+        .orElse(0.0);
+  }
+
+  private String buildRecallQuizDashboardDescription(
+      double changeRate,
+      boolean hasThisWeekData,
+      boolean hasAverageData
+  ) {
+    if (!hasThisWeekData) {
+      return "이번 주 회상 퀴즈 데이터가 아직 없습니다";
+    }
+
+    if (!hasAverageData) {
+      return "이전 기간 데이터가 없어 이번 주 회상 퀴즈 정답률만 표시합니다";
+    }
+
+    if (changeRate > 0) {
+      return "평균 대비 회상 퀴즈 정답률 %.0f%% 증가".formatted(changeRate);
+    }
+
+    if (changeRate < 0) {
+      return "평균 대비 회상 퀴즈 정답률 %.0f%% 감소".formatted(Math.abs(changeRate));
+    }
+
+    return "평균 대비 회상 퀴즈 정답률 변화 없음";
+  }
+
+  private double calculateChangeRate(
+      double thisWeekScore,
+      double averageScore,
+      boolean hasThisWeekData,
+      boolean hasAverageData
+  ) {
+    if (!hasThisWeekData || !hasAverageData) {
+      return 0.0;
+    }
+
+    return thisWeekScore - averageScore;
+  }
+
+  private void validateRecallDashboardReadableTarget(Long loginUserId, Long userId) {
+    if (loginUserId == null) {
+      throw new ExceptionList(GuardianLinkErrorCode.UNAUTHORIZED_GUARDIAN);
+    }
+
+    User loginUser = userRepository.getByUserId(loginUserId);
+    User targetUser = userRepository.getByUserId(userId);
+
+    if (targetUser.getRole() != Role.USER) {
+      throw new ExceptionList(GuardianLinkErrorCode.TARGET_USER_ONLY);
+    }
+
+    if (loginUser.getRole() == Role.USER) {
+      if (!loginUser.getUserId().equals(userId)) {
+        throw new ExceptionList(GuardianLinkErrorCode.TARGET_USER_ONLY);
+      }
+      return;
+    }
+
+    if (loginUser.getRole() == Role.GUARDIAN) {
+      guardianLinkRepository.validateLinked(userId, loginUserId);
+      return;
+    }
+
+    throw new ExceptionList(GuardianLinkErrorCode.UNAUTHORIZED_GUARDIAN);
   }
 }

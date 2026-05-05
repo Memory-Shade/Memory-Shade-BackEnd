@@ -5,6 +5,7 @@ import com.memoryshade.domain.recall.dto.RecallQuizResultResponseDto;
 import com.memoryshade.domain.recall.dto.RecallQuizSessionCreateResponseDto;
 import com.memoryshade.domain.recall.dto.RecallQuizTextRequestDto;
 import com.memoryshade.domain.recall.dto.RecallQuizTextResponseDto;
+import com.memoryshade.domain.recall.dto.RecallQuizWeeklyAverageComparisonResponseDto;
 import com.memoryshade.domain.recall.service.RecallQuizService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
@@ -71,6 +72,16 @@ public class RecallQuizController {
   ) {
     return ResponseEntity.ok(
         recallQuizService.getRecallQuizResult(loginUserId, recallQuizSessionId)
+    );
+  }
+
+  @GetMapping("/weekly-averages/comparison")
+  public ResponseEntity<RecallQuizWeeklyAverageComparisonResponseDto> getWeeklyRecallQuizAverageComparison(
+      @AuthenticationPrincipal Long loginUserId,
+      @RequestParam("user_id") Long userId
+  ) {
+    return ResponseEntity.ok(
+        recallQuizService.getWeeklyRecallQuizAverageComparison(loginUserId, userId)
     );
   }
 }
