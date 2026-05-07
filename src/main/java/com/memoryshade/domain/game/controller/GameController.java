@@ -3,6 +3,7 @@ package com.memoryshade.domain.game.controller;
 import com.memoryshade.domain.game.dto.GameCreateResultRequestDto;
 import com.memoryshade.domain.game.dto.GameCreateResultResponseDto;
 import com.memoryshade.domain.game.dto.GameResponseDto;
+import com.memoryshade.domain.game.dto.GameWeeklyAverageComparisonResponseDto;
 import com.memoryshade.domain.game.service.GameService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
@@ -22,16 +23,27 @@ public class GameController {
 
     @PostMapping("/result")
     public ResponseEntity<GameCreateResultResponseDto> createGameResult(
-            @AuthenticationPrincipal Long loginUserId,
-            @Valid @RequestBody GameCreateResultRequestDto request) {
+        @AuthenticationPrincipal Long loginUserId,
+        @Valid @RequestBody GameCreateResultRequestDto request
+    ) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(gameService.createGameResult(loginUserId, request));
+            .body(gameService.createGameResult(loginUserId, request));
     }
 
     @GetMapping("/me/best")
     public ResponseEntity<GameResponseDto> getBestGame(
-            @AuthenticationPrincipal Long loginUserId) {
+        @AuthenticationPrincipal Long loginUserId
+    ) {
         return ResponseEntity.ok(gameService.getBestGame(loginUserId));
     }
-}
 
+    @GetMapping("/weekly-averages/comparison")
+    public ResponseEntity<GameWeeklyAverageComparisonResponseDto> getWeeklyGameAverageComparison(
+        @AuthenticationPrincipal Long loginUserId,
+        @RequestParam("user_id") Long userId
+    ) {
+        return ResponseEntity.ok(
+            gameService.getWeeklyGameAverageComparison(loginUserId, userId)
+        );
+    }
+}
