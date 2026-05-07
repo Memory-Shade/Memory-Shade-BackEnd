@@ -7,13 +7,13 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming;
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public record RecallQuizWeeklyAverageComparisonResponseDto(
     @JsonProperty("this_week_score")
-    double thisWeekScore,
+    int thisWeekScore,
 
     @JsonProperty("average_score")
-    double averageScore,
+    int averageScore,
 
     @JsonProperty("change_rate")
-    double changeRate,
+    int changeRate,
 
     @JsonProperty("has_data")
     boolean hasData,

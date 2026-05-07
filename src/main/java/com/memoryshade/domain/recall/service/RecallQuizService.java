@@ -122,7 +122,8 @@ public class RecallQuizService {
   }
 
   @Transactional(readOnly = true)
-  public RecallQuizMessagesReadResponseDto getRecallQuizMessages(Long loginUserId, Long recallQuizSessionId) {
+  public RecallQuizMessagesReadResponseDto getRecallQuizMessages(Long loginUserId,
+      Long recallQuizSessionId) {
     validateUserId(loginUserId);
     RecallQuizSession session = getOwnedRecallQuizSession(loginUserId, recallQuizSessionId);
 
@@ -130,7 +131,8 @@ public class RecallQuizService {
   }
 
   @Transactional(readOnly = true)
-  public RecallQuizResultResponseDto getRecallQuizResult(Long loginUserId, Long recallQuizSessionId) {
+  public RecallQuizResultResponseDto getRecallQuizResult(Long loginUserId,
+      Long recallQuizSessionId) {
     validateUserId(loginUserId);
     RecallQuizSession session = getOwnedRecallQuizSession(loginUserId, recallQuizSessionId);
 
@@ -205,7 +207,8 @@ public class RecallQuizService {
     );
   }
 
-  private RecallQuizSession createNewRecallQuizSession(User user, Long loginUserId, LocalDate today) {
+  private RecallQuizSession createNewRecallQuizSession(User user, Long loginUserId,
+      LocalDate today) {
     List<Diary> recentDiaries = getRecentDiaries(loginUserId);
     if (recentDiaries.isEmpty()) {
       throw new ExceptionList(RecallErrorCode.RECENT_DIARY_NOT_FOUND);
@@ -260,7 +263,8 @@ public class RecallQuizService {
 
   private RecallQuizQuestion getCurrentQuestion(RecallQuizSession session) {
     List<RecallQuizQuestion> questions = recallQuizQuestionRepository
-        .findAllByRecallQuizSession_RecallQuizSessionIdOrderByQuestionOrderAsc(session.getRecallQuizSessionId());
+        .findAllByRecallQuizSession_RecallQuizSessionIdOrderByQuestionOrderAsc(
+            session.getRecallQuizSessionId());
 
     for (RecallQuizQuestion question : questions) {
       boolean answered = recallQuizAnswerRepository.existsByRecallQuizQuestion_RecallQuizQuestionId(
@@ -277,7 +281,8 @@ public class RecallQuizService {
 
   private RecallQuizQuestion getNextQuestionToAsk(RecallQuizSession session) {
     List<RecallQuizQuestion> questions = recallQuizQuestionRepository
-        .findAllByRecallQuizSession_RecallQuizSessionIdOrderByQuestionOrderAsc(session.getRecallQuizSessionId());
+        .findAllByRecallQuizSession_RecallQuizSessionIdOrderByQuestionOrderAsc(
+            session.getRecallQuizSessionId());
 
     for (RecallQuizQuestion question : questions) {
       if (!question.isAsked()) {
@@ -290,12 +295,14 @@ public class RecallQuizService {
 
   private boolean isCompleted(RecallQuizSession session) {
     List<RecallQuizQuestion> questions = recallQuizQuestionRepository
-        .findAllByRecallQuizSession_RecallQuizSessionIdOrderByQuestionOrderAsc(session.getRecallQuizSessionId());
+        .findAllByRecallQuizSession_RecallQuizSessionIdOrderByQuestionOrderAsc(
+            session.getRecallQuizSessionId());
 
     long answeredCount = questions.stream()
-        .filter(question -> recallQuizAnswerRepository.existsByRecallQuizQuestion_RecallQuizQuestionId(
-            question.getRecallQuizQuestionId()
-        ))
+        .filter(
+            question -> recallQuizAnswerRepository.existsByRecallQuizQuestion_RecallQuizQuestionId(
+                question.getRecallQuizQuestionId()
+            ))
         .count();
 
     return answeredCount >= questions.size();
@@ -357,7 +364,8 @@ public class RecallQuizService {
 
   private List<RecallQuizMessageResponseDto> buildMessages(RecallQuizSession session) {
     List<RecallQuizQuestion> questions = recallQuizQuestionRepository
-        .findAllByRecallQuizSession_RecallQuizSessionIdOrderByQuestionOrderAsc(session.getRecallQuizSessionId());
+        .findAllByRecallQuizSession_RecallQuizSessionIdOrderByQuestionOrderAsc(
+            session.getRecallQuizSessionId());
 
     List<RecallQuizMessageResponseDto> messages = new ArrayList<>();
 
@@ -433,7 +441,8 @@ public class RecallQuizService {
     while (questionOrder <= TOTAL_QUESTION_COUNT) {
       Diary diary = recentDiaries.get(round % recentDiaries.size());
 
-      List<DiaryMedia> diaryMedias = diaryMediaRepository.findAllByDiary_DiaryId(diary.getDiaryId());
+      List<DiaryMedia> diaryMedias = diaryMediaRepository.findAllByDiary_DiaryId(
+          diary.getDiaryId());
       DiaryMedia firstMedia = diaryMedias.isEmpty() ? null : diaryMedias.get(0);
 
       String questionText = buildQuestionText(diary, firstMedia, questionOrder);
@@ -564,7 +573,7 @@ public class RecallQuizService {
       Long loginUserId,
       Long userId
   ) {
-    validateRecallDashboardReadableTarget(loginUserId, userId);
+    validateGuardianCanReadRecallDashboard(loginUserId, userId);
 
     LocalDate today = LocalDate.now();
 
@@ -588,13 +597,13 @@ public class RecallQuizService {
             averageEndDate
         );
 
-    double thisWeekScore = calculateAverageScore(thisWeekSessions);
-    double averageScore = calculateAverageScore(averageSessions);
+    int thisWeekScore = calculateAverageScore(thisWeekSessions);
+    int averageScore = calculateAverageScore(averageSessions);
 
     boolean hasThisWeekData = !thisWeekSessions.isEmpty();
     boolean hasAverageData = !averageSessions.isEmpty();
 
-    double changeRate = calculateChangeRate(
+    int changeRate = calculateChangeRate(
         thisWeekScore,
         averageScore,
         hasThisWeekData,
@@ -610,19 +619,21 @@ public class RecallQuizService {
     );
   }
 
-  private double calculateAverageScore(List<RecallQuizSession> sessions) {
+  private int calculateAverageScore(List<RecallQuizSession> sessions) {
     if (sessions == null || sessions.isEmpty()) {
-      return 0.0;
+      return 0;
     }
 
-    return sessions.stream()
+    double averageScore = sessions.stream()
         .mapToDouble(RecallQuizSession::calculateScorePercent)
         .average()
         .orElse(0.0);
+
+    return Math.round((float) averageScore);
   }
 
   private String buildRecallQuizDashboardDescription(
-      double changeRate,
+      int changeRate,
       boolean hasThisWeekData,
       boolean hasAverageData
   ) {
@@ -635,30 +646,30 @@ public class RecallQuizService {
     }
 
     if (changeRate > 0) {
-      return "평균 대비 회상 퀴즈 정답률 %.0f%% 증가".formatted(changeRate);
+      return "평균 대비 회상 퀴즈 정답률이 %d%% 향상되었습니다".formatted(changeRate);
     }
 
     if (changeRate < 0) {
-      return "평균 대비 회상 퀴즈 정답률 %.0f%% 감소".formatted(Math.abs(changeRate));
+      return "평균 대비 회상 퀴즈 정답률이 %d%% 감소했습니다".formatted(Math.abs(changeRate));
     }
 
     return "평균 대비 회상 퀴즈 정답률 변화 없음";
   }
 
-  private double calculateChangeRate(
-      double thisWeekScore,
-      double averageScore,
+  private int calculateChangeRate(
+      int thisWeekScore,
+      int averageScore,
       boolean hasThisWeekData,
       boolean hasAverageData
   ) {
     if (!hasThisWeekData || !hasAverageData) {
-      return 0.0;
+      return 0;
     }
 
     return thisWeekScore - averageScore;
   }
 
-  private void validateRecallDashboardReadableTarget(Long loginUserId, Long userId) {
+  private void validateGuardianCanReadRecallDashboard(Long loginUserId, Long userId) {
     if (loginUserId == null) {
       throw new ExceptionList(GuardianLinkErrorCode.UNAUTHORIZED_GUARDIAN);
     }
@@ -666,22 +677,15 @@ public class RecallQuizService {
     User loginUser = userRepository.getByUserId(loginUserId);
     User targetUser = userRepository.getByUserId(userId);
 
+    if (loginUser.getRole() != Role.GUARDIAN) {
+      throw new ExceptionList(GuardianLinkErrorCode.UNAUTHORIZED_GUARDIAN);
+    }
+
     if (targetUser.getRole() != Role.USER) {
       throw new ExceptionList(GuardianLinkErrorCode.TARGET_USER_ONLY);
     }
 
-    if (loginUser.getRole() == Role.USER) {
-      if (!loginUser.getUserId().equals(userId)) {
-        throw new ExceptionList(GuardianLinkErrorCode.TARGET_USER_ONLY);
-      }
-      return;
-    }
+    guardianLinkRepository.validateLinked(userId, loginUserId);
 
-    if (loginUser.getRole() == Role.GUARDIAN) {
-      guardianLinkRepository.validateLinked(userId, loginUserId);
-      return;
-    }
-
-    throw new ExceptionList(GuardianLinkErrorCode.UNAUTHORIZED_GUARDIAN);
   }
 }
