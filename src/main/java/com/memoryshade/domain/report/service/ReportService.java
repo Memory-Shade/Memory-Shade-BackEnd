@@ -4,10 +4,15 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.memoryshade.domain.emotion.dto.EmotionMonthlyAverageComparisonResponseDto;
 import com.memoryshade.domain.emotion.service.EmotionService;
+import com.memoryshade.domain.guardianLink.exception.GuardianLinkErrorCode;
+import com.memoryshade.domain.guardianLink.repository.GuardianLinkRepository;
 import com.memoryshade.domain.recall.dto.RecallQuizWeeklyAverageComparisonResponseDto;
 import com.memoryshade.domain.recall.service.RecallQuizService;
 import com.memoryshade.domain.report.dto.StatusSummaryResponseDto;
 import com.memoryshade.domain.report.exception.ReportErrorCode;
+import com.memoryshade.domain.user.model.Role;
+import com.memoryshade.domain.user.model.User;
+import com.memoryshade.domain.user.repository.UserRepository;
 import com.memoryshade.global.exception.ExceptionList;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.chat.client.ChatClient;
@@ -53,9 +58,13 @@ public class ReportService {
   private final RecallQuizService recallQuizService;
   private final ChatClient chatClient;
   private final ObjectMapper objectMapper;
+  private final UserRepository userRepository;
+  private final GuardianLinkRepository guardianLinkRepository;
 
   @Transactional(readOnly = true)
   public StatusSummaryResponseDto getStatusSummary(Long loginUserId, Long userId) {
+    validateGuardianCanReadStatusSummary(loginUserId, userId);
+
     EmotionMonthlyAverageComparisonResponseDto emotionComparison =
         emotionService.getMonthlyEmotionAverageComparison(loginUserId, userId);
 
@@ -113,5 +122,24 @@ public class ReportService {
     } catch (JsonProcessingException e) {
       throw new ExceptionList(ReportErrorCode.STATUS_SUMMARY_GENERATION_FAILED);
     }
+  }
+
+  private void validateGuardianCanReadStatusSummary(Long loginUserId, Long userId) {
+    if (loginUserId == null) {
+      throw new ExceptionList(GuardianLinkErrorCode.UNAUTHORIZED_GUARDIAN);
+    }
+
+    User loginUser = userRepository.getByUserId(loginUserId);
+    User targetUser = userRepository.getByUserId(userId);
+
+    if (loginUser.getRole() != Role.GUARDIAN) {
+      throw new ExceptionList(GuardianLinkErrorCode.UNAUTHORIZED_GUARDIAN);
+    }
+
+    if (targetUser.getRole() != Role.USER) {
+      throw new ExceptionList(GuardianLinkErrorCode.TARGET_USER_ONLY);
+    }
+
+    guardianLinkRepository.validateLinked(userId, loginUserId);
   }
 }
