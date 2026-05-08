@@ -17,11 +17,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 @Service
 @RequiredArgsConstructor
@@ -63,38 +58,19 @@ public class StepService {
         LocalDate startDate = targetDate.with(DayOfWeek.MONDAY);
         LocalDate endDate = targetDate.with(DayOfWeek.SUNDAY);
 
-        Map<LocalDate, DailyStepRecord> recordsByDate = dailyStepRecordRepository
+        int totalSteps = dailyStepRecordRepository
                 .findAllByUser_UserIdAndRecordDateBetweenOrderByRecordDateAsc(
                         userId,
                         startDate,
                         endDate
                 )
                 .stream()
-                .collect(Collectors.toMap(DailyStepRecord::getRecordDate, Function.identity()));
-
-        List<DailyStepResponseDto> dailySteps = IntStream.rangeClosed(0, 6)
-                .mapToObj(startDate::plusDays)
-                .map(date -> {
-                    DailyStepRecord record = recordsByDate.get(date);
-                    return record == null
-                            ? DailyStepResponseDto.empty(userId, date)
-                            : DailyStepResponseDto.from(record);
-                })
-                .toList();
-
-        int totalSteps = dailySteps.stream()
-                .mapToInt(DailyStepResponseDto::stepCount)
+                .mapToInt(DailyStepRecord::getStepCount)
                 .sum();
 
         int averageSteps = totalSteps / 7;
 
-        return new WeeklyStepStatsResponseDto(
-                startDate,
-                endDate,
-                totalSteps,
-                averageSteps,
-                dailySteps
-        );
+        return new WeeklyStepStatsResponseDto(averageSteps);
     }
 
     private void validateAuthenticated(Long loginUserId) {
