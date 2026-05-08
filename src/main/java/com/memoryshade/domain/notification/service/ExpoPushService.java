@@ -37,13 +37,57 @@ public class ExpoPushService {
                 )
         );
 
+        send(expoPushToken, payload, "guardianLinkRequest");
+    }
+
+    public void sendDailyReminder(String expoPushToken) {
+        if (!StringUtils.hasText(expoPushToken)) {
+            return;
+        }
+
+        Map<String, Object> payload = Map.of(
+                "to", expoPushToken,
+                "sound", "default",
+                "title", "기록할 시간이에요",
+                "body", "오늘의 기억과 상태를 남겨보세요.",
+                "data", Map.of(
+                        "type", "DAILY_REMINDER"
+                )
+        );
+
+        send(expoPushToken, payload, "dailyReminder");
+    }
+
+    public void sendGameReminder(String expoPushToken) {
+        if (!StringUtils.hasText(expoPushToken)) {
+            return;
+        }
+
+        Map<String, Object> payload = Map.of(
+                "to", expoPushToken,
+                "sound", "default",
+                "title", "오늘 컨디션은 어떠신가요?",
+                "body", "잠깐 시간을 내어 인지 기능 강화 게임을 해보아요.",
+                "data", Map.of(
+                        "type", "CONDITION_REMINDER"
+                )
+        );
+
+        send(expoPushToken, payload, "conditionReminder");
+    }
+
+    private void send(String expoPushToken, Map<String, Object> payload, String pushType) {
+        if (!StringUtils.hasText(expoPushToken)) {
+            return;
+        }
+
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
 
         try {
             restTemplate.postForEntity(EXPO_PUSH_URL, new HttpEntity<>(payload, headers), String.class);
         } catch (RestClientException e) {
-            log.warn("Expo push send failed. requestId={}, token={}", requestId, expoPushToken, e);
+            log.warn("Expo push send failed. type={}, token={}", pushType, expoPushToken, e);
         }
     }
 }
