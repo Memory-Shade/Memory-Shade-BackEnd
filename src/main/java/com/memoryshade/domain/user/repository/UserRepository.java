@@ -1,16 +1,19 @@
 package com.memoryshade.domain.user.repository;
 
 import com.memoryshade.domain.auth.exception.AuthErrorCode;
+import com.memoryshade.domain.user.model.Role;
 import com.memoryshade.domain.user.model.User;
 import com.memoryshade.global.exception.ExceptionList;
 import org.springframework.data.repository.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface UserRepository extends Repository<User, Long> {
 
     Optional<User> findByPhoneNumber(String phoneNumber);
     Optional<User> findByUserId(Long userId);
+    List<User> findAllByRoleAndFcmTokenIsNotNull(Role role);
 
     User save(User user);
 
