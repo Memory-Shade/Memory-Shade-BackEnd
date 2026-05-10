@@ -56,12 +56,12 @@ public class GpsService {
 
     public List<GpsResponseDto> getUserGps(Long loginUserId, Long userId) {
         if (loginUserId == null) {
-            throw new ExceptionList(GpsErrorCode.UNAUTHORIZED_GUARDIAN);
+            throw new ExceptionList(GpsErrorCode.UNAUTHORIZED_USER);
         }
 
-        User guardian = userRepository.getByUserId(loginUserId);
-        if (guardian.getRole() != Role.GUARDIAN) {
-            throw new ExceptionList(GpsErrorCode.GUARDIAN_ONLY);
+        User loginUser = userRepository.getByUserId(loginUserId);
+        if (loginUser.getRole() != Role.USER) {
+            throw new ExceptionList(GpsErrorCode.USER_ONLY);
         }
 
         User user = userRepository.getByUserId(userId);
@@ -69,7 +69,9 @@ public class GpsService {
             throw new ExceptionList(GpsErrorCode.TARGET_USER_ONLY);
         }
 
-        guardianLinkRepository.validateLinked(userId, loginUserId);
+        if (!loginUserId.equals(userId)) {
+            throw new ExceptionList(GpsErrorCode.SELF_READ_ONLY);
+        }
 
         return gpsRepository.findAllByUser_UserId(userId)
                 .stream()
