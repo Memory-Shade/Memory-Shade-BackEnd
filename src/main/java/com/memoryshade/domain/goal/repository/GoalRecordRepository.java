@@ -6,9 +6,14 @@ import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 
 public interface GoalRecordRepository extends Repository<GoalRecord, Long> {
+    GoalRecord save(GoalRecord goalRecord);
+
+    Optional<GoalRecord> findByGoal_GoalIdAndDiary_DiaryId(Long goalId, Long diaryId);
+
     @Query("""
     select count(gr)
     from GoalRecord gr

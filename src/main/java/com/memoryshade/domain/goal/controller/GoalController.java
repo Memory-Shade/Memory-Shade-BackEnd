@@ -1,5 +1,7 @@
 package com.memoryshade.domain.goal.controller;
 
+import com.memoryshade.domain.goal.dto.GoalAchievementRequestDto;
+import com.memoryshade.domain.goal.dto.GoalAchievementResponseDto;
 import com.memoryshade.domain.goal.dto.GoalCreateRequestDto;
 import com.memoryshade.domain.goal.dto.GoalCreateResponseDto;
 import com.memoryshade.domain.goal.dto.GoalGetResponseDto;
@@ -36,5 +38,15 @@ public class GoalController {
     @GetMapping("/progress")
     public ResponseEntity<GoalProgressResponseDto> getGoalProgress(@AuthenticationPrincipal Long loginUserId) {
         return ResponseEntity.ok(goalService.getProgress(loginUserId));
+    }
+
+    @PostMapping("/achievement")
+    public ResponseEntity<GoalAchievementResponseDto> checkTodayAchievement(
+        @AuthenticationPrincipal Long loginUserId,
+        @Valid @RequestBody GoalAchievementRequestDto request
+    ) {
+        return ResponseEntity.ok(
+            goalService.checkTodayAchievement(loginUserId, request)
+        );
     }
 }
