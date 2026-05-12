@@ -1,5 +1,6 @@
 package com.memoryshade.domain.location.controller;
 
+import com.memoryshade.domain.location.dto.DailyWanderingCountResponseDto;
 import com.memoryshade.domain.location.dto.LocationUpdateRequestDto;
 import com.memoryshade.domain.location.dto.LocationUpdateResponseDto;
 import com.memoryshade.domain.location.dto.WeeklyWanderingAverageResponseDto;
@@ -39,5 +40,16 @@ public class LocationController {
             LocalDate baseDate
     ) {
         return ResponseEntity.ok(locationService.getWeeklyWanderingAverage(loginUserId, userId, baseDate));
+    }
+
+    @GetMapping("/{userId}/wandering/daily-count")
+    public ResponseEntity<DailyWanderingCountResponseDto> getDailyWanderingCount(
+            @AuthenticationPrincipal Long loginUserId,
+            @PathVariable Long userId,
+            @RequestParam(name = "date", required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate date
+    ) {
+        return ResponseEntity.ok(locationService.getDailyWanderingCount(loginUserId, userId, date));
     }
 }

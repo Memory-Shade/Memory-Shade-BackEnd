@@ -3,6 +3,7 @@ package com.memoryshade.domain.location.service;
 import com.memoryshade.domain.gps.model.Gps;
 import com.memoryshade.domain.gps.repository.GpsRepository;
 import com.memoryshade.domain.guardianLink.repository.GuardianLinkRepository;
+import com.memoryshade.domain.location.dto.DailyWanderingCountResponseDto;
 import com.memoryshade.domain.location.dto.LocationUpdateRequestDto;
 import com.memoryshade.domain.location.dto.LocationUpdateResponseDto;
 import com.memoryshade.domain.location.dto.WeeklyWanderingAverageResponseDto;
@@ -110,6 +111,24 @@ public class LocationService {
                 startDate,
                 endDate,
                 weeklyCount / 7.0
+        );
+    }
+
+    public DailyWanderingCountResponseDto getDailyWanderingCount(Long loginUserId, Long userId, LocalDate date) {
+        validateAuthenticated(loginUserId);
+        validateGuardianCanAccessUser(loginUserId, userId);
+
+        LocalDate targetDate = date == null ? LocalDate.now() : date;
+        long dailyCount = wanderingEventRepository.countByUser_UserIdAndOccurredAtBetween(
+                userId,
+                targetDate.atStartOfDay(),
+                targetDate.plusDays(1).atStartOfDay()
+        );
+
+        return new DailyWanderingCountResponseDto(
+                userId,
+                targetDate,
+                dailyCount
         );
     }
 
