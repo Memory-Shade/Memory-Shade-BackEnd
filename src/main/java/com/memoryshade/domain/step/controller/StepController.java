@@ -1,6 +1,7 @@
 package com.memoryshade.domain.step.controller;
 
 import com.memoryshade.domain.step.dto.DailyStepResponseDto;
+import com.memoryshade.domain.step.dto.DailyStepCountResponseDto;
 import com.memoryshade.domain.step.dto.DailyStepSaveRequestDto;
 import com.memoryshade.domain.step.dto.WeeklyStepStatsResponseDto;
 import com.memoryshade.domain.step.service.StepService;
@@ -39,5 +40,16 @@ public class StepController {
             LocalDate baseDate
     ) {
         return ResponseEntity.ok(stepService.getUserWeeklyStats(loginUserId, userId, baseDate));
+    }
+
+    @GetMapping("/{userId}/steps/daily")
+    public ResponseEntity<DailyStepCountResponseDto> getUserDailySteps(
+            @AuthenticationPrincipal Long loginUserId,
+            @PathVariable Long userId,
+            @RequestParam(name = "record_date")
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate recordDate
+    ) {
+        return ResponseEntity.ok(stepService.getUserDailySteps(loginUserId, userId, recordDate));
     }
 }

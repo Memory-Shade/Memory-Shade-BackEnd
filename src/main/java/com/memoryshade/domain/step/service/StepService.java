@@ -1,6 +1,7 @@
 package com.memoryshade.domain.step.service;
 
 import com.memoryshade.domain.step.dto.DailyStepResponseDto;
+import com.memoryshade.domain.step.dto.DailyStepCountResponseDto;
 import com.memoryshade.domain.step.dto.DailyStepSaveRequestDto;
 import com.memoryshade.domain.step.dto.WeeklyStepStatsResponseDto;
 import com.memoryshade.domain.step.exception.StepErrorCode;
@@ -71,6 +72,18 @@ public class StepService {
         int averageSteps = totalSteps / 7;
 
         return new WeeklyStepStatsResponseDto(averageSteps);
+    }
+
+    public DailyStepCountResponseDto getUserDailySteps(Long loginUserId, Long userId, LocalDate recordDate) {
+        validateAuthenticated(loginUserId);
+        validateGuardianCanAccessUser(loginUserId, userId);
+
+        int stepCount = dailyStepRecordRepository
+                .findByUser_UserIdAndRecordDate(userId, recordDate)
+                .map(DailyStepRecord::getStepCount)
+                .orElse(0);
+
+        return new DailyStepCountResponseDto(stepCount);
     }
 
     private void validateAuthenticated(Long loginUserId) {
