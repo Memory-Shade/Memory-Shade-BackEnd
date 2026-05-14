@@ -418,7 +418,7 @@ public class RecallQuizService {
   }
 
   private List<Diary> getRecentDiaries(Long loginUserId) {
-    LocalDate endDate = LocalDate.now().minusDays(1);
+    LocalDate endDate = LocalDate.now();
     LocalDate startDate = endDate.minusDays(6);
 
     return diaryRepository.findAllByUser_UserIdAndDiaryDateBetweenOrderByDiaryDateDesc(
