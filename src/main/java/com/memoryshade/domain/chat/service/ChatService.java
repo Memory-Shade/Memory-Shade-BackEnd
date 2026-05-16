@@ -1,4 +1,3 @@
-
 package com.memoryshade.domain.chat.service;
 
 import com.memoryshade.domain.chat.dto.*;
@@ -15,6 +14,7 @@ import com.memoryshade.domain.user.model.User;
 import com.memoryshade.domain.user.repository.UserRepository;
 import com.memoryshade.global.exception.ExceptionList;
 import com.memoryshade.global.file.FileStorageService;
+import com.memoryshade.global.tts.TtsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.*;
@@ -56,10 +56,26 @@ public class ChatService {
           """;
 
   private static final String SUMMARY_SYSTEM_PROMPT = """
-            당신은 경증 치매 어르신의 하루 대화를 요약하는 AI입니다.
-            사용자의 하루를 중심으로 핵심 사건, 감정, 활동을 2~3문장으로 간단히 요약하세요.
-            불필요한 설명 없이 일기 저장용 요약만 작성하세요.
-            """;
+    당신은 경증 치매 어르신의 하루 대화를 일기 형태로 요약하는 AI입니다.
+
+    반드시 지켜야 할 규칙:
+    1. "USER", "사용자", "어르신", "환자", "대상자" 같은 주어 표현을 사용하지 마세요.
+    2. 문장의 주어를 억지로 넣지 말고, 하루에 있었던 일을 자연스럽게 요약하세요.
+    3. "~하셨습니다"처럼 딱딱한 보고서체보다 "~했어요", "~보냈어요", "~떠올렸어요"처럼 부드러운 일기체로 작성하세요.
+    4. 함께한 사람이 있다면 "미영님과 함께", "가족과 함께"처럼 자연스럽게 표현하세요.
+    5. 핵심 사건, 장소, 함께한 사람, 활동, 감정을 중심으로 2~3문장으로 요약하세요.
+    6. 없는 내용은 추측하지 말고, 대화에 나온 내용만 사용하세요.
+    7. 불필요한 설명 없이 일기 저장용 요약만 작성하세요.
+
+    좋은 예:
+    - 오늘 미영님과 함께 공원을 산책했어요. 산책 후에는 카페에 들러 커피를 마시며 편안한 시간을 보냈어요.
+    - 점심에는 김치찌개와 계란말이를 먹었고, 오후에는 가족과 통화했어요. 하루를 차분하게 보내며 기분이 한결 좋아졌어요.
+
+    나쁜 예:
+    - USER님께서는 오늘 미영이와 산책을 하셨습니다.
+    - 사용자는 오늘 가족과 시간을 보냈습니다.
+    - 어르신은 오늘 기분이 좋았다고 말했습니다.
+    """;
 
   private static final String PHOTO_DESCRIPTION_REQUEST_MESSAGE =
       "사진을 올려주셨네요. 이 사진이 언제, 어디에서 찍은 사진인지 설명해 주실 수 있을까요?";
@@ -74,6 +90,7 @@ public class ChatService {
   private final OpenAiAudioTranscriptionModel sttModel;
   private final ChatClient chatClient;
   private final FileStorageService fileStorageService;
+  private final TtsService ttsService;
 
   @Transactional
   public ChatSessionCreateResponseDto createChatSession(Long loginUserId) {
@@ -83,15 +100,23 @@ public class ChatService {
 
     ChatSession session = sessionRepository
         .findByUser_UserIdAndSessionDateAndIsActiveTrue(loginUserId, today)
-        .orElseGet(() -> sessionRepository.save(ChatSession.builder().user(user).sessionDate(today).build()));
+        .orElseGet(() -> sessionRepository.save(
+            ChatSession.builder()
+                .user(user)
+                .sessionDate(today)
+                .build()
+        ));
 
-    List<ChatMessage> existingMessages = messageRepository.findAllBySession_SessionIdOrderByCreatedAtAsc(session.getSessionId());
+    List<ChatMessage> existingMessages =
+        messageRepository.findAllBySession_SessionIdOrderByCreatedAtAsc(session.getSessionId());
 
     if (!existingMessages.isEmpty()) {
       return new ChatSessionCreateResponseDto(
           session.getSessionId(),
           session.getSessionDate(),
-          existingMessages.stream().map(ChatMessageResponseDto::from).toList()
+          existingMessages.stream()
+              .map(ChatMessageResponseDto::from)
+              .toList()
       );
     }
 
@@ -108,7 +133,9 @@ public class ChatService {
   @Transactional
   public ChatVoiceResponseDto createVoiceChatMessage(Long loginUserId, Long sessionId, MultipartFile file) {
     validateUserId(loginUserId);
-    if (file == null || file.isEmpty()) throw new ExceptionList(ChatErrorCode.EMPTY_AUDIO_FILE);
+    if (file == null || file.isEmpty()) {
+      throw new ExceptionList(ChatErrorCode.EMPTY_AUDIO_FILE);
+    }
 
     ChatSession session = getOwnedActiveSession(loginUserId, sessionId);
     String userText = transcribe(file);
@@ -130,7 +157,9 @@ public class ChatService {
   @Transactional
   public ChatMediaUploadResponseDto uploadChatMedia(Long loginUserId, Long sessionId, List<MultipartFile> files) {
     validateUserId(loginUserId);
-    if (files == null || files.isEmpty()) throw new ExceptionList(ChatErrorCode.EMPTY_IMAGE_FILE);
+    if (files == null || files.isEmpty()) {
+      throw new ExceptionList(ChatErrorCode.EMPTY_IMAGE_FILE);
+    }
 
     ChatSession session = getOwnedActiveSession(loginUserId, sessionId);
 
@@ -144,32 +173,41 @@ public class ChatService {
               .mediaType(MediaType.IMAGE)
               .build());
           return url;
-        }).toList();
+        })
+        .toList();
 
-    if (mediaUrls.isEmpty()) throw new ExceptionList(ChatErrorCode.EMPTY_IMAGE_FILE);
+    if (mediaUrls.isEmpty()) {
+      throw new ExceptionList(ChatErrorCode.EMPTY_IMAGE_FILE);
+    }
 
     saveMessage(session, SenderType.AI, PHOTO_DESCRIPTION_REQUEST_MESSAGE);
 
     return new ChatMediaUploadResponseDto(mediaUrls);
   }
 
-
   @Transactional
   public ChatSessionCloseResponseDto closeChatSession(Long loginUserId, Long sessionId) {
     validateUserId(loginUserId);
     ChatSession session = getOwnedActiveSession(loginUserId, sessionId);
 
-    List<ChatMessage> messages = messageRepository.findAllBySession_SessionIdOrderByCreatedAtAsc(session.getSessionId());
-    if (messages.isEmpty()) throw new ExceptionList(ChatErrorCode.CHAT_MESSAGE_NOT_FOUND);
+    List<ChatMessage> messages =
+        messageRepository.findAllBySession_SessionIdOrderByCreatedAtAsc(session.getSessionId());
+    if (messages.isEmpty()) {
+      throw new ExceptionList(ChatErrorCode.CHAT_MESSAGE_NOT_FOUND);
+    }
 
     String contentStt = buildContentStt(messages);
     String contentSummary = generateChatSummary(messages);
 
     DiaryCreateFromChatResponseDto diaryResponse = diaryService.createDiaryFromChat(
-        loginUserId, contentStt, contentSummary, session.getSessionDate()
+        loginUserId,
+        contentStt,
+        contentSummary,
+        session.getSessionDate()
     );
 
-    List<ChatSessionMedia> chatSessionMedias = chatSessionMediaRepository.findAllBySession_SessionIdOrderByCreatedAtAsc(sessionId);
+    List<ChatSessionMedia> chatSessionMedias =
+        chatSessionMediaRepository.findAllBySession_SessionIdOrderByCreatedAtAsc(sessionId);
     if (!chatSessionMedias.isEmpty()) {
       diaryMediaService.createDiaryMediasFromChatSession(diaryResponse.diaryId(), chatSessionMedias);
     }
@@ -178,7 +216,9 @@ public class ChatService {
     session.close();
 
     return new ChatSessionCloseResponseDto(
-        diaryResponse.diaryId(), diaryResponse.diaryDate(), diaryResponse.contentSummary()
+        diaryResponse.diaryId(),
+        diaryResponse.diaryDate(),
+        diaryResponse.contentSummary()
     );
   }
 
@@ -189,18 +229,41 @@ public class ChatService {
 
     List<ChatMessageResponseDto> messages = messageRepository
         .findAllBySession_SessionIdOrderByCreatedAtAsc(session.getSessionId())
-        .stream().map(ChatMessageResponseDto::from).toList();
+        .stream()
+        .map(ChatMessageResponseDto::from)
+        .toList();
 
     List<ChatMediaReadResponseDto> medias = chatSessionMediaRepository
         .findAllBySession_SessionIdOrderByCreatedAtAsc(session.getSessionId())
-        .stream().map(ChatMediaReadResponseDto::from).toList();
+        .stream()
+        .map(ChatMediaReadResponseDto::from)
+        .toList();
 
     return new ChatMessagesReadResponseDto(messages, medias);
   }
 
+  @Transactional(readOnly = true)
+  public byte[] getChatMessageTts(Long loginUserId, Long sessionId, Long messageId) {
+    validateUserId(loginUserId);
+    ChatSession session = getOwnedActiveSession(loginUserId, sessionId);
+
+    ChatMessage message = messageRepository.findByMessageIdAndSession_SessionId(
+            messageId,
+            session.getSessionId()
+        )
+        .orElseThrow(() -> new ExceptionList(ChatErrorCode.CHAT_MESSAGE_NOT_FOUND));
+
+    if (message.getSenderType() != SenderType.AI) {
+      throw new ExceptionList(ChatErrorCode.TTS_NOT_ALLOWED);
+    }
+
+    return ttsService.synthesize(message.getContent());
+  }
 
   private void validateUserId(Long userId) {
-    if (userId == null) throw new ExceptionList(ChatErrorCode.UNAUTHORIZED_USER);
+    if (userId == null) {
+      throw new ExceptionList(ChatErrorCode.UNAUTHORIZED_USER);
+    }
   }
 
   private ChatVoiceResponseDto processChatInteraction(ChatSession session, String userText) {
@@ -215,16 +278,19 @@ public class ChatService {
   }
 
   private ChatSession getOwnedActiveSession(Long loginUserId, Long sessionId) {
-    userRepository.getByUserId(loginUserId); // 유저 존재 여부 확인 컨벤션 유지
+    userRepository.getByUserId(loginUserId);
+
     ChatSession session = sessionRepository.findById(sessionId)
         .orElseThrow(() -> new ExceptionList(ChatErrorCode.CHAT_SESSION_NOT_FOUND));
 
     if (!session.getUser().getUserId().equals(loginUserId)) {
       throw new ExceptionList(ChatErrorCode.UNAUTHORIZED_USER);
     }
+
     if (!session.isActive()) {
       throw new ExceptionList(ChatErrorCode.CHAT_SESSION_CLOSED);
     }
+
     return session;
   }
 
@@ -244,7 +310,9 @@ public class ChatService {
               new SystemMessage(INITIAL_QUESTION_SYSTEM_PROMPT),
               new UserMessage("전날 일기 요약:\n" + previousSummary)
           ))
-          .call().content();
+          .call()
+          .content();
+
       return (content == null || content.isBlank()) ? DEFAULT_INITIAL_QUESTION : content;
     } catch (Exception e) {
       return DEFAULT_INITIAL_QUESTION;
@@ -254,10 +322,17 @@ public class ChatService {
   private String transcribe(MultipartFile file) {
     try {
       Resource resource = new ByteArrayResource(file.getBytes()) {
-        @Override public String getFilename() { return file.getOriginalFilename(); }
+        @Override
+        public String getFilename() {
+          return file.getOriginalFilename();
+        }
       };
+
       String result = sttModel.call(resource);
-      if (result == null || result.isBlank()) throw new ExceptionList(ChatErrorCode.STT_FAILED);
+      if (result == null || result.isBlank()) {
+        throw new ExceptionList(ChatErrorCode.STT_FAILED);
+      }
+
       return result;
     } catch (Exception e) {
       throw new ExceptionList(ChatErrorCode.STT_FAILED);
@@ -269,13 +344,22 @@ public class ChatService {
       List<Message> messages = new java.util.ArrayList<>(messageRepository
           .findAllBySession_SessionIdOrderByCreatedAtAsc(session.getSessionId())
           .stream()
-          .map(m -> m.getSenderType() == SenderType.USER ? new UserMessage(m.getContent()) : new AssistantMessage(m.getContent()))
+          .map(m -> m.getSenderType() == SenderType.USER
+              ? new UserMessage(m.getContent())
+              : new AssistantMessage(m.getContent()))
           .toList());
 
       messages.add(0, new SystemMessage(CHAT_SYSTEM_PROMPT));
 
-      String result = chatClient.prompt().messages(messages).call().content();
-      if (result == null || result.isBlank()) throw new ExceptionList(ChatErrorCode.AI_RESPONSE_FAILED);
+      String result = chatClient.prompt()
+          .messages(messages)
+          .call()
+          .content();
+
+      if (result == null || result.isBlank()) {
+        throw new ExceptionList(ChatErrorCode.AI_RESPONSE_FAILED);
+      }
+
       return result;
     } catch (Exception e) {
       throw new ExceptionList(ChatErrorCode.AI_RESPONSE_FAILED);
@@ -300,9 +384,13 @@ public class ChatService {
               new SystemMessage(SUMMARY_SYSTEM_PROMPT),
               new UserMessage("대화 내용:\n" + conversation)
           ))
-          .call().content();
+          .call()
+          .content();
 
-      if (result == null || result.isBlank()) throw new ExceptionList(ChatErrorCode.AI_RESPONSE_FAILED);
+      if (result == null || result.isBlank()) {
+        throw new ExceptionList(ChatErrorCode.AI_RESPONSE_FAILED);
+      }
+
       return result;
     } catch (Exception e) {
       throw new ExceptionList(ChatErrorCode.AI_RESPONSE_FAILED);
