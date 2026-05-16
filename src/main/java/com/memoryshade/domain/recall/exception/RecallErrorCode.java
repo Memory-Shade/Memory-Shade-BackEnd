@@ -18,7 +18,8 @@ public enum RecallErrorCode implements ErrorCode {
   RECALL_QUIZ_QUESTION_NOT_FOUND(HttpStatus.NOT_FOUND, "현재 진행 중인 회상 질문이 없습니다"),
   RECALL_QUIZ_CREATE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "회상 퀴즈 생성에 실패했습니다"),
   RECALL_QUIZ_EVALUATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "회상 퀴즈 답변 평가에 실패했습니다"),
-  RECALL_QUIZ_STT_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "회상 퀴즈 음성 변환에 실패했습니다");
+  RECALL_QUIZ_STT_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "회상 퀴즈 음성 변환에 실패했습니다"),
+  RECALL_QUIZ_TTS_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "회상 질문 음성 생성에 실패했습니다");
 
   private final HttpStatus httpStatus;
   private final String message;

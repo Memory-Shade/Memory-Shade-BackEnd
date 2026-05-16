@@ -3,7 +3,6 @@ package com.memoryshade.domain.chat.controller;
 import java.util.List;
 
 import com.memoryshade.domain.chat.dto.ChatMediaUploadResponseDto;
-import com.memoryshade.domain.chat.dto.ChatMessageResponseDto;
 import com.memoryshade.domain.chat.dto.ChatMessagesReadResponseDto;
 import com.memoryshade.domain.chat.dto.ChatSessionCloseResponseDto;
 import com.memoryshade.domain.chat.dto.ChatSessionCreateResponseDto;
@@ -22,7 +21,6 @@ import org.springframework.web.multipart.MultipartFile;
 @RequestMapping("/api/chat-sessions")
 @RequiredArgsConstructor
 @SecurityRequirement(name = "bearerAuth")
-
 public class ChatController {
 
   private final ChatService chatService;
@@ -33,7 +31,6 @@ public class ChatController {
   ) {
     return ResponseEntity.ok(chatService.createChatSession(loginUserId));
   }
-
 
   @PostMapping(
       value = "/{sessionId}/messages/voice",
@@ -92,4 +89,17 @@ public class ChatController {
     return ResponseEntity.ok(chatService.getChatMessages(loginUserId, sessionId));
   }
 
+  @GetMapping(
+      value = "/{sessionId}/messages/{messageId}/tts",
+      produces = "audio/mpeg"
+  )
+  public ResponseEntity<byte[]> getChatMessageTts(
+      @AuthenticationPrincipal Long loginUserId,
+      @PathVariable Long sessionId,
+      @PathVariable Long messageId
+  ) {
+    return ResponseEntity.ok()
+        .contentType(MediaType.parseMediaType("audio/mpeg"))
+        .body(chatService.getChatMessageTts(loginUserId, sessionId, messageId));
+  }
 }

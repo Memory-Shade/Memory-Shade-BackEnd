@@ -16,18 +16,32 @@ public record ChatMessageResponseDto(
     @JsonProperty("sender_type")
     SenderType senderType,
 
-    @JsonProperty("content")
     String content,
 
     @JsonProperty("created_at")
-    LocalDateTime createdAt
+    LocalDateTime createdAt,
+
+    @JsonProperty("tts_url")
+    String ttsUrl
 ) {
-  public static ChatMessageResponseDto from(ChatMessage message) {
+  public static ChatMessageResponseDto from(ChatMessage chatMessage) {
     return new ChatMessageResponseDto(
-        message.getMessageId(),
-        message.getSenderType(),
-        message.getContent(),
-        message.getCreatedAt()
+        chatMessage.getMessageId(),
+        chatMessage.getSenderType(),
+        chatMessage.getContent(),
+        chatMessage.getCreatedAt(),
+        buildTtsUrl(chatMessage)
+    );
+  }
+
+  private static String buildTtsUrl(ChatMessage chatMessage) {
+    if (chatMessage.getSenderType() != SenderType.AI) {
+      return null;
+    }
+
+    return "/api/chat-sessions/%d/messages/%d/tts".formatted(
+        chatMessage.getSession().getSessionId(),
+        chatMessage.getMessageId()
     );
   }
 }

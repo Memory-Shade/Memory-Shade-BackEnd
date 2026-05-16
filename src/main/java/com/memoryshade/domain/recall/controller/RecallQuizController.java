@@ -75,6 +75,24 @@ public class RecallQuizController {
     );
   }
 
+  @GetMapping(
+      value = "/{recallQuizSessionId}/questions/{recallQuizQuestionId}/tts",
+      produces = "audio/mpeg"
+  )
+  public ResponseEntity<byte[]> getRecallQuizQuestionTts(
+      @AuthenticationPrincipal Long loginUserId,
+      @PathVariable Long recallQuizSessionId,
+      @PathVariable Long recallQuizQuestionId
+  ) {
+    return ResponseEntity.ok()
+        .contentType(MediaType.parseMediaType("audio/mpeg"))
+        .body(recallQuizService.getRecallQuizQuestionTts(
+            loginUserId,
+            recallQuizSessionId,
+            recallQuizQuestionId
+        ));
+  }
+
   @GetMapping("/weekly-averages/comparison")
   public ResponseEntity<RecallQuizWeeklyAverageComparisonResponseDto> getWeeklyRecallQuizAverageComparison(
       @AuthenticationPrincipal Long loginUserId,

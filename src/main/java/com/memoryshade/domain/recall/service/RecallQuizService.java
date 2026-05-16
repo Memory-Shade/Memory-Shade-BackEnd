@@ -26,6 +26,7 @@ import com.memoryshade.domain.user.model.Role;
 import com.memoryshade.domain.user.model.User;
 import com.memoryshade.domain.user.repository.UserRepository;
 import com.memoryshade.global.exception.ExceptionList;
+import com.memoryshade.global.tts.TtsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.SystemMessage;
@@ -68,10 +69,12 @@ public class RecallQuizService {
   private final ChatClient chatClient;
   private final OpenAiAudioTranscriptionModel sttModel;
   private final GuardianLinkRepository guardianLinkRepository;
+  private final TtsService ttsService;
 
   @Transactional
   public RecallQuizSessionCreateResponseDto createRecallQuizSession(Long loginUserId) {
     validateUserId(loginUserId);
+
     User user = userRepository.getByUserId(loginUserId);
     LocalDate today = LocalDate.now();
 
@@ -122,18 +125,24 @@ public class RecallQuizService {
   }
 
   @Transactional(readOnly = true)
-  public RecallQuizMessagesReadResponseDto getRecallQuizMessages(Long loginUserId,
-      Long recallQuizSessionId) {
+  public RecallQuizMessagesReadResponseDto getRecallQuizMessages(
+      Long loginUserId,
+      Long recallQuizSessionId
+  ) {
     validateUserId(loginUserId);
+
     RecallQuizSession session = getOwnedRecallQuizSession(loginUserId, recallQuizSessionId);
 
     return new RecallQuizMessagesReadResponseDto(buildMessages(session));
   }
 
   @Transactional(readOnly = true)
-  public RecallQuizResultResponseDto getRecallQuizResult(Long loginUserId,
-      Long recallQuizSessionId) {
+  public RecallQuizResultResponseDto getRecallQuizResult(
+      Long loginUserId,
+      Long recallQuizSessionId
+  ) {
     validateUserId(loginUserId);
+
     RecallQuizSession session = getOwnedRecallQuizSession(loginUserId, recallQuizSessionId);
 
     return new RecallQuizResultResponseDto(
@@ -146,6 +155,30 @@ public class RecallQuizService {
         session.isCompleted(),
         session.getCompletedAt()
     );
+  }
+
+  @Transactional(readOnly = true)
+  public byte[] getRecallQuizQuestionTts(
+      Long loginUserId,
+      Long recallQuizSessionId,
+      Long recallQuizQuestionId
+  ) {
+    validateUserId(loginUserId);
+
+    RecallQuizSession session = getOwnedRecallQuizSession(loginUserId, recallQuizSessionId);
+
+    RecallQuizQuestion question = recallQuizQuestionRepository
+        .findByRecallQuizQuestionIdAndRecallQuizSession_RecallQuizSessionId(
+            recallQuizQuestionId,
+            session.getRecallQuizSessionId()
+        )
+        .orElseThrow(() -> new ExceptionList(RecallErrorCode.RECALL_QUIZ_QUESTION_NOT_FOUND));
+
+    try {
+      return ttsService.synthesize(question.getQuestionText());
+    } catch (Exception e) {
+      throw new ExceptionList(RecallErrorCode.RECALL_QUIZ_TTS_FAILED);
+    }
   }
 
   private RecallQuizTextResponseDto submitRecallQuizAnswer(
@@ -173,8 +206,15 @@ public class RecallQuizService {
       return new RecallQuizTextResponseDto(
           session.getRecallQuizSessionId(),
           List.of(
-              RecallQuizMessageResponseDto.user(answer.getUserAnswer(), answer.getCreatedAt()),
-              RecallQuizMessageResponseDto.ai(COMPLETED_MESSAGE, null, session.getCompletedAt())
+              RecallQuizMessageResponseDto.user(
+                  answer.getUserAnswer(),
+                  answer.getCreatedAt()
+              ),
+              RecallQuizMessageResponseDto.aiWithoutTts(
+                  COMPLETED_MESSAGE,
+                  null,
+                  session.getCompletedAt()
+              )
           )
       );
     }
@@ -186,8 +226,15 @@ public class RecallQuizService {
       return new RecallQuizTextResponseDto(
           session.getRecallQuizSessionId(),
           List.of(
-              RecallQuizMessageResponseDto.user(answer.getUserAnswer(), answer.getCreatedAt()),
-              RecallQuizMessageResponseDto.ai(COMPLETED_MESSAGE, null, LocalDateTime.now())
+              RecallQuizMessageResponseDto.user(
+                  answer.getUserAnswer(),
+                  answer.getCreatedAt()
+              ),
+              RecallQuizMessageResponseDto.aiWithoutTts(
+                  COMPLETED_MESSAGE,
+                  null,
+                  LocalDateTime.now()
+              )
           )
       );
     }
@@ -197,8 +244,13 @@ public class RecallQuizService {
     return new RecallQuizTextResponseDto(
         session.getRecallQuizSessionId(),
         List.of(
-            RecallQuizMessageResponseDto.user(answer.getUserAnswer(), answer.getCreatedAt()),
+            RecallQuizMessageResponseDto.user(
+                answer.getUserAnswer(),
+                answer.getCreatedAt()
+            ),
             RecallQuizMessageResponseDto.ai(
+                session.getRecallQuizSessionId(),
+                nextQuestion.getRecallQuizQuestionId(),
                 nextQuestion.getQuestionText(),
                 nextQuestion.getReferenceMediaUrl(),
                 nextQuestion.getAskedAt()
@@ -207,8 +259,11 @@ public class RecallQuizService {
     );
   }
 
-  private RecallQuizSession createNewRecallQuizSession(User user, Long loginUserId,
-      LocalDate today) {
+  private RecallQuizSession createNewRecallQuizSession(
+      User user,
+      Long loginUserId,
+      LocalDate today
+  ) {
     List<Diary> recentDiaries = getRecentDiaries(loginUserId);
     if (recentDiaries.isEmpty()) {
       throw new ExceptionList(RecallErrorCode.RECENT_DIARY_NOT_FOUND);
@@ -248,7 +303,10 @@ public class RecallQuizService {
     return session;
   }
 
-  private RecallQuizSession getOwnedRecallQuizSession(Long loginUserId, Long recallQuizSessionId) {
+  private RecallQuizSession getOwnedRecallQuizSession(
+      Long loginUserId,
+      Long recallQuizSessionId
+  ) {
     userRepository.getByUserId(loginUserId);
 
     RecallQuizSession session = recallQuizSessionRepository.findById(recallQuizSessionId)
@@ -264,7 +322,8 @@ public class RecallQuizService {
   private RecallQuizQuestion getCurrentQuestion(RecallQuizSession session) {
     List<RecallQuizQuestion> questions = recallQuizQuestionRepository
         .findAllByRecallQuizSession_RecallQuizSessionIdOrderByQuestionOrderAsc(
-            session.getRecallQuizSessionId());
+            session.getRecallQuizSessionId()
+        );
 
     for (RecallQuizQuestion question : questions) {
       boolean answered = recallQuizAnswerRepository.existsByRecallQuizQuestion_RecallQuizQuestionId(
@@ -282,7 +341,8 @@ public class RecallQuizService {
   private RecallQuizQuestion getNextQuestionToAsk(RecallQuizSession session) {
     List<RecallQuizQuestion> questions = recallQuizQuestionRepository
         .findAllByRecallQuizSession_RecallQuizSessionIdOrderByQuestionOrderAsc(
-            session.getRecallQuizSessionId());
+            session.getRecallQuizSessionId()
+        );
 
     for (RecallQuizQuestion question : questions) {
       if (!question.isAsked()) {
@@ -296,19 +356,24 @@ public class RecallQuizService {
   private boolean isCompleted(RecallQuizSession session) {
     List<RecallQuizQuestion> questions = recallQuizQuestionRepository
         .findAllByRecallQuizSession_RecallQuizSessionIdOrderByQuestionOrderAsc(
-            session.getRecallQuizSessionId());
+            session.getRecallQuizSessionId()
+        );
 
     long answeredCount = questions.stream()
-        .filter(
-            question -> recallQuizAnswerRepository.existsByRecallQuizQuestion_RecallQuizQuestionId(
+        .filter(question ->
+            recallQuizAnswerRepository.existsByRecallQuizQuestion_RecallQuizQuestionId(
                 question.getRecallQuizQuestionId()
-            ))
+            )
+        )
         .count();
 
     return answeredCount >= questions.size();
   }
 
-  private RecallQuizAnswer evaluateAnswer(RecallQuizQuestion question, String userAnswer) {
+  private RecallQuizAnswer evaluateAnswer(
+      RecallQuizQuestion question,
+      String userAnswer
+  ) {
     try {
       String result = chatClient.prompt()
           .messages(List.of(
@@ -365,7 +430,8 @@ public class RecallQuizService {
   private List<RecallQuizMessageResponseDto> buildMessages(RecallQuizSession session) {
     List<RecallQuizQuestion> questions = recallQuizQuestionRepository
         .findAllByRecallQuizSession_RecallQuizSessionIdOrderByQuestionOrderAsc(
-            session.getRecallQuizSessionId());
+            session.getRecallQuizSessionId()
+        );
 
     List<RecallQuizMessageResponseDto> messages = new ArrayList<>();
 
@@ -376,6 +442,8 @@ public class RecallQuizService {
 
       messages.add(
           RecallQuizMessageResponseDto.ai(
+              session.getRecallQuizSessionId(),
+              question.getRecallQuizQuestionId(),
               question.getQuestionText(),
               question.getReferenceMediaUrl(),
               question.getAskedAt()
@@ -400,7 +468,7 @@ public class RecallQuizService {
 
     if (session.isCompleted()) {
       messages.add(
-          RecallQuizMessageResponseDto.ai(
+          RecallQuizMessageResponseDto.aiWithoutTts(
               COMPLETED_MESSAGE,
               null,
               session.getCompletedAt()
@@ -442,7 +510,9 @@ public class RecallQuizService {
       Diary diary = recentDiaries.get(round % recentDiaries.size());
 
       List<DiaryMedia> diaryMedias = diaryMediaRepository.findAllByDiary_DiaryId(
-          diary.getDiaryId());
+          diary.getDiaryId()
+      );
+
       DiaryMedia firstMedia = diaryMedias.isEmpty() ? null : diaryMedias.get(0);
 
       String questionText = buildQuestionText(diary, firstMedia, questionOrder);
@@ -463,7 +533,11 @@ public class RecallQuizService {
     return results;
   }
 
-  private String buildQuestionText(Diary diary, DiaryMedia diaryMedia, int questionOrder) {
+  private String buildQuestionText(
+      Diary diary,
+      DiaryMedia diaryMedia,
+      int questionOrder
+  ) {
     String summary = diary.getContentSummary() == null ? "" : diary.getContentSummary();
 
     if (diaryMedia != null) {
@@ -473,7 +547,11 @@ public class RecallQuizService {
     return buildTextBasedQuestion(summary, diary.getDiaryDate(), questionOrder);
   }
 
-  private String buildPhotoBasedQuestion(String summary, LocalDate diaryDate, int questionOrder) {
+  private String buildPhotoBasedQuestion(
+      String summary,
+      LocalDate diaryDate,
+      int questionOrder
+  ) {
     return switch (questionOrder % 5) {
       case 1 -> "이 사진을 보면 그날의 기억이 조금 떠오르실 수 있어요. 이때 어디에 계셨는지 기억나시나요?";
       case 2 -> "사진 속 하루를 함께 떠올려 볼게요. 이 날 누구와 함께 시간을 보내셨나요?";
@@ -483,7 +561,11 @@ public class RecallQuizService {
     };
   }
 
-  private String buildTextBasedQuestion(String summary, LocalDate diaryDate, int questionOrder) {
+  private String buildTextBasedQuestion(
+      String summary,
+      LocalDate diaryDate,
+      int questionOrder
+  ) {
     if (summary.contains("카페") || summary.contains("커피")) {
       return switch (questionOrder % 3) {
         case 1 -> "최근 카페에 다녀오신 기록이 있어요. 누구와 함께 가셨는지 기억나시나요?";
@@ -567,7 +649,6 @@ public class RecallQuizService {
     return "";
   }
 
-
   @Transactional(readOnly = true)
   public RecallQuizWeeklyAverageComparisonResponseDto getWeeklyRecallQuizAverageComparison(
       Long loginUserId,
@@ -632,6 +713,19 @@ public class RecallQuizService {
     return Math.round((float) averageScore);
   }
 
+  private int calculateChangeRate(
+      int thisWeekScore,
+      int averageScore,
+      boolean hasThisWeekData,
+      boolean hasAverageData
+  ) {
+    if (!hasThisWeekData || !hasAverageData) {
+      return 0;
+    }
+
+    return thisWeekScore - averageScore;
+  }
+
   private String buildRecallQuizDashboardDescription(
       int changeRate,
       boolean hasThisWeekData,
@@ -656,19 +750,6 @@ public class RecallQuizService {
     return "평균 대비 회상 퀴즈 정답률 변화 없음";
   }
 
-  private int calculateChangeRate(
-      int thisWeekScore,
-      int averageScore,
-      boolean hasThisWeekData,
-      boolean hasAverageData
-  ) {
-    if (!hasThisWeekData || !hasAverageData) {
-      return 0;
-    }
-
-    return thisWeekScore - averageScore;
-  }
-
   private void validateGuardianCanReadRecallDashboard(Long loginUserId, Long userId) {
     if (loginUserId == null) {
       throw new ExceptionList(GuardianLinkErrorCode.UNAUTHORIZED_GUARDIAN);
@@ -686,6 +767,5 @@ public class RecallQuizService {
     }
 
     guardianLinkRepository.validateLinked(userId, loginUserId);
-
   }
 }

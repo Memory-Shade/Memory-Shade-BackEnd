@@ -17,23 +17,62 @@ public record RecallQuizMessageResponseDto(
     String referenceMediaUrl,
 
     @JsonProperty("created_at")
-    LocalDateTime createdAt
+    LocalDateTime createdAt,
+
+    @JsonProperty("tts_url")
+    String ttsUrl
 ) {
-  public static RecallQuizMessageResponseDto ai(String content, String referenceMediaUrl, LocalDateTime createdAt) {
+  public static RecallQuizMessageResponseDto ai(
+      Long recallQuizSessionId,
+      Long recallQuizQuestionId,
+      String content,
+      String referenceMediaUrl,
+      LocalDateTime createdAt
+  ) {
     return new RecallQuizMessageResponseDto(
         "AI",
         content,
         referenceMediaUrl,
-        createdAt
+        createdAt,
+        buildTtsUrl(recallQuizSessionId, recallQuizQuestionId)
     );
   }
 
-  public static RecallQuizMessageResponseDto user(String content, LocalDateTime createdAt) {
+  public static RecallQuizMessageResponseDto aiWithoutTts(
+      String content,
+      String referenceMediaUrl,
+      LocalDateTime createdAt
+  ) {
+    return new RecallQuizMessageResponseDto(
+        "AI",
+        content,
+        referenceMediaUrl,
+        createdAt,
+        null
+    );
+  }
+
+  public static RecallQuizMessageResponseDto user(
+      String content,
+      LocalDateTime createdAt
+  ) {
     return new RecallQuizMessageResponseDto(
         "USER",
         content,
         null,
-        createdAt
+        createdAt,
+        null
+    );
+  }
+
+  private static String buildTtsUrl(Long recallQuizSessionId, Long recallQuizQuestionId) {
+    if (recallQuizSessionId == null || recallQuizQuestionId == null) {
+      return null;
+    }
+
+    return "/api/recall-quiz-sessions/%d/questions/%d/tts".formatted(
+        recallQuizSessionId,
+        recallQuizQuestionId
     );
   }
 }
