@@ -55,30 +55,38 @@ public class GpsService {
     }
 
     public List<GpsResponseDto> getUserGps(Long loginUserId, Long userId) {
+
         if (loginUserId == null) {
-            throw new ExceptionList(GpsErrorCode.UNAUTHORIZED_USER);
+            throw new ExceptionList(GpsErrorCode.UNAUTHORIZED_GUARDIAN);
         }
 
         User loginUser = userRepository.getByUserId(loginUserId);
-        if (loginUser.getRole() != Role.USER) {
-            throw new ExceptionList(GpsErrorCode.USER_ONLY);
-        }
+        User targetUser = userRepository.getByUserId(userId);
 
-        User user = userRepository.getByUserId(userId);
-        if (user.getRole() != Role.USER) {
+        if (targetUser.getRole() != Role.USER) {
             throw new ExceptionList(GpsErrorCode.TARGET_USER_ONLY);
         }
 
-        if (!loginUserId.equals(userId)) {
-            throw new ExceptionList(GpsErrorCode.SELF_READ_ONLY);
+
+        if (loginUser.getRole() == Role.GUARDIAN) {
+            // 보호자는 링크 검증
+            guardianLinkRepository.validateLinked(userId, loginUserId);
+
+        } else if (loginUser.getRole() == Role.USER) {
+            // 사용자는 자기 것만 허용
+            if (!loginUserId.equals(userId)) {
+                throw new ExceptionList(GpsErrorCode.UNAUTHORIZED_GUARDIAN);
+            }
+
+        } else {
+            throw new ExceptionList(GpsErrorCode.UNAUTHORIZED_GUARDIAN);
         }
 
         return gpsRepository.findAllByUser_UserId(userId)
-                .stream()
-                .map(GpsResponseDto::fromGps)
-                .toList();
+            .stream()
+            .map(GpsResponseDto::fromGps)
+            .toList();
     }
-
     @Transactional
     public GpsResponseDto update(Long loginUserId, Long userId, Long zoneId, GpsRequestDto request) {
         if (loginUserId == null) {
